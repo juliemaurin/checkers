@@ -69,7 +69,6 @@ void CheckerBoard::make_move(Word move) {
       // Computing taken_piece position
       Word taken_piece = static_cast<Word>(1) << ((index_high + index_low) / 2);
       if (((index_low / 4) % 2) != 0) taken_piece <<= 1;
-      std::cout << "T : " << std::bitset<32>(taken_piece) << std::endl;
 
       // Removing taken_piece from board
       if ((pieces[passive] & taken_piece) == 0) throw std::invalid_argument("WRONG JUMP");
@@ -155,11 +154,6 @@ std::vector<Word> CheckerBoard::get_jumps() {
   Word bj7 = backward_jumpers7();
   Word bj9 = backward_jumpers9();
 
-  std::cout << "FJ7 : " << std::bitset<32>(fj7) << std::endl;
-  std::cout << "FJ9 : " << std::bitset<32>(fj9) << std::endl;
-  std::cout << "BJ7 : " << std::bitset<32>(bj7) << std::endl;
-  std::cout << "BJ9 : " << std::bitset<32>(bj9) << std::endl;
-
   std::vector<Word> jumps;
   add_move(jumps, MASK_JUMP7, fj7);
   add_move(jumps, MASK_JUMP9, fj9);
@@ -242,9 +236,6 @@ std::ostream &operator<<(std::ostream &os, const CheckerBoard &b) {
   const std::string BLACK_COLOR = "\033[41m\033[97m";
   const std::string WHITE_COLOR = "\033[107m\033[30m";
   const std::string RESET_COLOR = "\033[0m";
-
-  os << "W : " << WHITE_COLOR << std::bitset<32>(b.pieces[CheckerBoard::WHITE]) << RESET_COLOR << std::endl;
-  os << "B : " << BLACK_COLOR << std::bitset<32>(b.pieces[CheckerBoard::BLACK]) << RESET_COLOR << std::endl;
 
   Word black_kings = b.backward[CheckerBoard::BLACK];
   Word black_men = b.forward[CheckerBoard::BLACK] ^ black_kings;

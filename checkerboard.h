@@ -7,8 +7,6 @@
 #include <utility>
 #include <vector>
 
-#include <bitset>
-
 typedef unsigned long Word;
 typedef unsigned char PieceType;
 
