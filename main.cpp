@@ -1,14 +1,17 @@
 #include <iostream>
 #include "checkerboard.h"
+#include "agentkevin.h"
 
 int main() {
   CheckerBoard B;
+  CheckersAgent *Black = new AgentKevin();
+  CheckersAgent *White = new AgentKevin();
   PieceType current_player = B.active;
   Word move;
   int turn = 1;
   std::cout << B;
   while(!B.is_over()) {
-      move = B.get_moves().at(0);
+      move = Black->make_move(B);
       std::cout << B.to_string(move) << std::endl;
       B.make_move(move);
       std::cout << B;
@@ -17,7 +20,7 @@ int main() {
 
       turn++;
       while(!B.is_over() && B.active == current_player) {
-          move = B.get_moves().at(0);
+          move = White->make_move(B);
           std::cout << B.to_string(move) << std::endl;
           B.make_move(move);
           std::cout << B;
