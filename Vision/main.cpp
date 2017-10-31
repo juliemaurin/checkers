@@ -4,7 +4,7 @@
 // onMouse event callback function
 void onMouse(int event, int x, int y, int flags, void* data) {
     if(event == CV_EVENT_LBUTTONDOWN) {
-        std::vector<cv::Point2f>* v = (std::vector<cv::Point2f>*)data;
+        std::vector<cv::Point2f>* v = static_cast <std::vector<cv::Point2f>*>(data);
         v->push_back(cv::Point2f(x, y));
     }
 }
@@ -20,53 +20,62 @@ int main(int argc, char *argv[]) {
   const int HEIGHT = atoi(argv[3]);
   const std::string IMAGE = argv[1];
 
-  //Load the image
+  // Load the image
   cv::Mat image = cv::imread(argv[1], CV_LOAD_IMAGE_COLOR);
+  // Also make a copy that will be edited to show dots while we select points
   cv::Mat input = image.clone();
+  // Output image
   cv::Mat output;
 
   // Input Quadilateral
+  // The 4 points that denotes the contour of the object
   cv::Point2f inputQuad[4];
 
   // Output Quadilateral
+  // 4 points that define the output size
   cv::Point2f outputQuad[4];
   outputQuad[0] = cv::Point2f(0, 0);
   outputQuad[1] = cv::Point2f(WIDTH - 1, 0);
   outputQuad[2] = cv::Point2f(WIDTH - 1, HEIGHT - 1);
   outputQuad[3] = cv::Point2f(0, HEIGHT - 1);
 
-  // Lambda Matrix
-  cv::Mat lambda(2, 4, CV_32FC1);
-
-  // Set the lambda matrix the same type and size as input
-  lambda = cv::Mat::zeros(input.size(), input.type());
-
+  // Input points vector
   std::vector<cv::Point2f> inputVect;
-  cv::namedWindow(IMAGE);
-  cv::setMouseCallback(IMAGE, onMouse, (void*)&inputVect);
 
+  // Create window and callback to mouse clicks
+  cv::namedWindow(IMAGE);
+  cv::setMouseCallback(IMAGE, onMouse, static_cast<void*>(&inputVect));
+
+  // Wait until we have 4 points
   while(inputVect.size() < 4) {
+      // Display image
       imshow(IMAGE, input);
-      for (auto p : inputVect) {
-          circle(input, p, 10, cv::Scalar(255, 0, 0), -1, CV_AA);
-      }
-      cv::waitKey(10);
+
+      // Display points live
+      for (auto p : inputVect) circle(input, p, 10, cv::Scalar(255, 0, 0), -1, CV_AA);
+
+      // 50Hz refresh
+      cv::waitKey(20);
   }
 
   // The 4 points that select quadilateral on the input , from top-left in clockwise order
   // These four pts are the sides of the rect box used as input
+  // This step is to tranform our vect to an array (ugly)
   for (int i = 0; i < 4; ++i) {
       cv::Point2f p = inputVect[i];
       inputQuad[i] = p;
+      // We also display point coordinates in stdout
       std::cout << p.x << " : " << p.y << std::endl;
   }
 
   // Get the Perspective Transform Matrix i.e. lambda
-  lambda = cv::getPerspectiveTransform(inputQuad, outputQuad);
+  cv::Mat lambda = cv::getPerspectiveTransform(inputQuad, outputQuad);
+  std::cout << lambda << std::endl;
+
   // Apply the Perspective Transform just found to the src image
   cv::warpPerspective(image, output, lambda, cv::Size(WIDTH, HEIGHT));
 
-  //Display input and output
+  //Display output
   cv::imshow("Output",output);
 
   cv::waitKey(0);
