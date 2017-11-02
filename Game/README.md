@@ -19,7 +19,12 @@ The ordering we used is the following :
 This type of encoding is known as a [Bitboard](https://en.wikipedia.org/wiki/Bitboard). this method of representing a board benefits from the performance of fully-pipelined bitwise operators of modern CPUs
 
 Every [move or jump](https://en.wikipedia.org/wiki/English_draughts#Move_rules) during the game is represented as an integer with only 2 bits sets, the origin and the destination of the move.
-    
+
+## Rules
+This engine follows [all the basic rules](https://en.wikipedia.org/wiki/English_draughts#Rules) for English draughts, with only one addition :
+
+To avoid endless games (in AI vs. AI matches), draws are enforced by the [treefold repetition](https://en.wikipedia.org/wiki/Threefold_repetition) rule. Any board arrangement that shows up for the third time will automatically force a draw.
+
 ##
 
 > Written with [StackEdit](https://stackedit.io/).
