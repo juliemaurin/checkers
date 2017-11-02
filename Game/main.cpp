@@ -3,6 +3,7 @@
 #include "agentkevin.h"
 
 int main() {
+  // Test script for AI vs. AI
   CheckerBoard B;
   CheckersAgent *Black = new AgentKevin();
   CheckersAgent *White = new AgentKevin();

@@ -8,6 +8,7 @@ AgentWalter::~AgentWalter() {
 
 }
 
+// TODO : Walter (Walter Pitts) will be our main AI
 Word AgentWalter::make_move(CheckerBoard &b) {
   return 0;
 }

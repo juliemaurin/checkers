@@ -9,6 +9,9 @@ AgentKevin::~AgentKevin() {
 }
 
 Word AgentKevin::make_move(CheckerBoard &b) {
+  // Kevin always choose a move randomly.
+  // Kevin is dumb.
+  // Don't be like Kevin.
   std::vector<Word> moves = b.get_moves();
   int n = std::rand() % static_cast<int>(moves.size());
   return moves.at(static_cast<std::vector<Word>::size_type>(n));
