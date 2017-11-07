@@ -10,7 +10,7 @@ void onMouse(int event, int x, int y, int flags, void* data) {
     }
 }
 
-int createReference(const std::string &filename, const int& size) {
+int createReference(const std::string &filename, const std::string &refname, const int& size) {
   // Load the image
   cv::Mat image = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
   // Also make a copy that will be edited to show dots while we select points
@@ -69,7 +69,7 @@ int createReference(const std::string &filename, const int& size) {
 
   //Display output
   cv::imshow("Output",output);
-  cv::imwrite("ref.png", output);
+  cv::imwrite(refname, output);
 
   cv::waitKey(0);
   return EXIT_SUCCESS;
@@ -84,7 +84,7 @@ int getPieces(const std::string &filename, const std::string &refname) {
   cv::Mat output;
   // Load reference image
   cv::Mat reference = cv::imread(refname, CV_LOAD_IMAGE_COLOR);
-  const int size = reference.size().height;
+  int size = reference.size().height;
 
   // Input Quadilateral
   // The 4 points that denotes the contour of the object
@@ -112,7 +112,7 @@ int getPieces(const std::string &filename, const std::string &refname) {
       imshow(filename, input);
 
       // Display points live
-      for (auto p : input_vect) circle(input, p, 10, cv::Scalar(255, 0, 0), -1, CV_AA);
+      if (input_vect.size()) circle(input, input_vect[input_vect.size() - 1], 10, cv::Scalar(255, 0, 0), -1, CV_AA);
 
       // 50Hz refresh
       cv::waitKey(20);
@@ -122,11 +122,10 @@ int getPieces(const std::string &filename, const std::string &refname) {
   // These four pts are the sides of the rect box used as input
   // This step is to tranform our vect to an array (ugly)
   std::cout << "Angle coordinates : " << std::endl;
-  for (int i = 0; i < 4; ++i) {
-      cv::Point2f p = input_vect[i];
-      input_quad[i] = p;
+  for (std::vector<cv::Point2f>::size_type i = 0; i < input_vect.size(); ++i) {
+      input_quad[i] = input_vect[i];
       // We also display point coordinates in stdout
-      std::cout << p.x << " : " << p.y << std::endl;
+      std::cout << "Point " << i + 1 << " : (" << input_quad[i].x << ", " << input_quad[i].y << ")" << std::endl;
   }
 
   // Get the Perspective Transform Matrix i.e. lambda
@@ -147,8 +146,8 @@ int getPieces(const std::string &filename, const std::string &refname) {
 //  cv::imshow("Difference", difference);
 
   // Morphological opening and closing to filter noise
-  const int MORPH_SIZE = size / 20;
-  cv::Mat kernel = cv::getStructuringElement(CV_SHAPE_ELLIPSE, cv::Size(MORPH_SIZE, MORPH_SIZE)) * 255;
+  int morph_size = size / 20;
+  cv::Mat kernel = cv::getStructuringElement(CV_SHAPE_ELLIPSE, cv::Size(morph_size, morph_size)) * 255;
 //  std::cout << "Morph kernel : " << std::endl;
 //  std::cout << kernel << std::endl;
   cv::morphologyEx(difference, difference, cv::MORPH_OPEN, kernel);
@@ -158,8 +157,6 @@ int getPieces(const std::string &filename, const std::string &refname) {
   cv::imshow("After closing", difference);
 
   // Split image in rectangles to detect presence of cells
-  int rect_x;
-  int rect_y;
   int rect_size = size / 8;
 
   // Initialize bitboard
@@ -168,38 +165,40 @@ int getPieces(const std::string &filename, const std::string &refname) {
   // Loop by line
   for(int j = 7; j >= 0; --j) {
       // Computing Y coordinate
-      rect_y = rect_size * (7 - j);
+      int rect_y = rect_size * (7 - j);
 
       // Loop by column
       for (int i = 0; i < 4; ++i) {
           // Computing X coordinate
-          rect_x = 2 * rect_size * i;
-          if (j % 2) rect_x += rect_size;
+          int rect_x = 2 * rect_size * i + (j % 2) * rect_size;
 
           // Computing cell index
-          int num = 4*j + i;
-          unsigned long cell = 1 << num;
+          int index = 4*j + i;
+          unsigned long cell = 1 << index;
 
           // Fetch cell
           cv::Mat roi = difference(cv::Rect(rect_x, rect_y, rect_size, rect_size));
 //          cv::imshow(std::to_string(num), roi);
 
           // Convert to HSV to get Value
-          const int VALUE_THRESHOLD = 10;
+          int threshold_r = 0;
+          int threshold_v = 10;
+          cv::Scalar mean_bgr = cv::mean(roi);
           cv::cvtColor(roi, roi, cv::COLOR_BGR2HSV);
+          cv::Scalar mean_hsv = cv::mean(roi);
 
           // If value is above threshold, a piece is present
-          std::cout << num << " (" << rect_x << ", " << rect_y << ") = " << cv::mean(roi);
-          if (cv::mean(roi).val[2] > VALUE_THRESHOLD) {
-              std::cout << "PIECE FOUND";
+          std::cout << index << " : (" << rect_x << ", " << rect_y << ")" << std::endl;
+          std::cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
+          if (mean_hsv.val[2] > threshold_v) {
+              std::cout << " PIECE FOUND";
               pieces |= cell;
           }
           std::cout << std::endl;
-
       }
   }
 
-  std::cout << "BOARD : " << std::bitset<32>(pieces) << std::endl;
+  std::cout << "BOARD : " << std::bitset<32>(pieces) << " (" << pieces << ")" << std::endl;
 
   cv::waitKey(0);
   return EXIT_SUCCESS;
@@ -207,15 +206,19 @@ int getPieces(const std::string &filename, const std::string &refname) {
 
 // Main program entry point
 int main(int argc, char *argv[]) {
-  if (argc != 4) {
-      std::cout << "Usage : checkersvision 1 <image> <size> - To create reference file" << std::endl;
-      std::cout << "        checkersvision 0 <image> <reference> - To parse a file" << std::endl;
+  if (argc != 4 && argc != 5) {
+      std::cout << "Usage : checkersvision create <image> <reference> <size> - To create reference file (of size*size) from image" << std::endl;
+      std::cout << "        checkersvision parse <image> <reference> - To parse an image in comparison to reference" << std::endl;
       return EXIT_FAILURE;
   }
 
-  const int MODE = atoi(argv[1]);
+  std::string mode = argv[1];
 
-  if (MODE) return createReference(argv[2], atoi(argv[3]));
-  else return getPieces(argv[2], argv[3]);
+  if (mode == "create") return createReference(argv[2], argv[3], atoi(argv[4]));
+  else if (mode == "parse") return getPieces(argv[2], argv[3]);
+  else {
+      std::cout << "Unknown mode '" << mode << "', see ./checkersvision for usage." << std::endl;
+      return EXIT_FAILURE;
+  }
 
 }
