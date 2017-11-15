@@ -44,7 +44,7 @@ int createReference(const std::string &filename, const std::string &refname, con
       imshow(filename, input);
 
       // Display points live
-      for (auto p : input_vect) circle(input, p, 10, cv::Scalar(255, 0, 0), -1, CV_AA);
+      if (input_vect.size()) circle(input, input_vect[input_vect.size() - 1], 10, cv::Scalar(255, 0, 0), -1, CV_AA);
 
       // 50Hz refresh
       cv::waitKey(20);
@@ -53,11 +53,11 @@ int createReference(const std::string &filename, const std::string &refname, con
   // The 4 points that select quadilateral on the input , from top-left in clockwise order
   // These four pts are the sides of the rect box used as input
   // This step is to tranform our vect to an array (ugly)
-  for (int i = 0; i < 4; ++i) {
-      cv::Point2f p = input_vect[i];
-      input_quad[i] = p;
+  std::cout << "Angle coordinates : " << std::endl;
+  for (std::vector<cv::Point2f>::size_type i = 0; i < input_vect.size(); ++i) {
+      input_quad[i] = input_vect[i];
       // We also display point coordinates in stdout
-      std::cout << p.x << " : " << p.y << std::endl;
+      std::cout << "Point " << i + 1 << " : (" << input_quad[i].x << ", " << input_quad[i].y << ")" << std::endl;
   }
 
   // Get the Perspective Transform Matrix i.e. lambda
