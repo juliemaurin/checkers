@@ -10,13 +10,9 @@ void onMouse(int event, int x, int y, int flags, void* data) {
     }
 }
 
-int createReference(const std::string &filename, const std::string &refname, const int& size) {
-  // Load the image
-  cv::Mat image = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
-  // Also make a copy that will be edited to show dots while we select points
+cv::Mat transformImage(const cv::Mat &image, const int& size) {
+  // Create a copy that will be modified
   cv::Mat input = image.clone();
-  // Output image
-  cv::Mat output;
 
   // Input Quadilateral
   // The 4 points that denotes the contour of the object
@@ -25,91 +21,19 @@ int createReference(const std::string &filename, const std::string &refname, con
   // Output Quadilateral
   // 4 points that define the output size
   // Output is a square of size x size pixels
-  cv::Point2f output_quad[4];
-  output_quad[0] = cv::Point2f(0, 0);
-  output_quad[1] = cv::Point2f(size - 1, 0);
-  output_quad[2] = cv::Point2f(size - 1, size - 1);
-  output_quad[3] = cv::Point2f(0, size - 1);
+  cv::Point2f output_quad[4] = {cv::Point2f(0, 0), cv::Point2f(size - 1, 0), cv::Point2f(size - 1, size - 1), cv::Point2f(0, size - 1)};
 
   // Input points vector
   std::vector<cv::Point2f> input_vect;
 
   // Create window and callback to mouse clicks
-  cv::namedWindow(filename);
-  cv::setMouseCallback(filename, onMouse, static_cast<void*>(&input_vect));
+  cv::namedWindow("Image");
+  cv::setMouseCallback("Image", onMouse, static_cast<void*>(&input_vect));
 
   // Wait until we have 4 points
   while(input_vect.size() < 4) {
       // Display image
-      imshow(filename, input);
-
-      // Display points live
-      if (input_vect.size()) circle(input, input_vect[input_vect.size() - 1], 10, cv::Scalar(255, 0, 0), -1, CV_AA);
-
-      // 50Hz refresh
-      cv::waitKey(20);
-  }
-
-  // The 4 points that select quadilateral on the input , from top-left in clockwise order
-  // These four pts are the sides of the rect box used as input
-  // This step is to tranform our vect to an array (ugly)
-  std::cout << "Angle coordinates : " << std::endl;
-  for (std::vector<cv::Point2f>::size_type i = 0; i < input_vect.size(); ++i) {
-      input_quad[i] = input_vect[i];
-      // We also display point coordinates in stdout
-      std::cout << "Point " << i + 1 << " : (" << input_quad[i].x << ", " << input_quad[i].y << ")" << std::endl;
-  }
-
-  // Get the Perspective Transform Matrix i.e. lambda
-  cv::Mat lambda = cv::getPerspectiveTransform(input_quad, output_quad);
-  std::cout << lambda << std::endl;
-
-  // Apply the Perspective Transform just found to the src image
-  cv::warpPerspective(image, output, lambda, cv::Size(size, size));
-
-  //Display output
-  cv::imshow("Output",output);
-  cv::imwrite(refname, output);
-
-  cv::waitKey(0);
-  return EXIT_SUCCESS;
-}
-
-int getPieces(const std::string &filename, const std::string &refname) {
-  // Load the image
-  cv::Mat image = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
-  // Also make a copy that will be edited to show dots while we select points
-  cv::Mat input = image.clone();
-  // Output image
-  cv::Mat output;
-  // Load reference image
-  cv::Mat reference = cv::imread(refname, CV_LOAD_IMAGE_COLOR);
-  int size = reference.size().height;
-
-  // Input Quadilateral
-  // The 4 points that denotes the contour of the object
-  cv::Point2f input_quad[4];
-
-  // Output Quadilateral
-  // 4 points that define the output size
-  // Output is a square of size x size pixels
-  cv::Point2f output_quad[4];
-  output_quad[0] = cv::Point2f(0, 0);
-  output_quad[1] = cv::Point2f(size - 1, 0);
-  output_quad[2] = cv::Point2f(size - 1, size - 1);
-  output_quad[3] = cv::Point2f(0, size - 1);
-
-  // Input points vector
-  std::vector<cv::Point2f> input_vect;
-
-  // Create window and callback to mouse clicks
-  cv::namedWindow(filename);
-  cv::setMouseCallback(filename, onMouse, static_cast<void*>(&input_vect));
-
-  // Wait until we have 4 points
-  while(input_vect.size() < 4) {
-      // Display image
-      imshow(filename, input);
+      imshow("Image", input);
 
       // Display points live
       if (input_vect.size()) circle(input, input_vect[input_vect.size() - 1], 10, cv::Scalar(255, 0, 0), -1, CV_AA);
@@ -134,7 +58,34 @@ int getPieces(const std::string &filename, const std::string &refname) {
   std::cout << lambda << std::endl;
 
   // Apply the Perspective Transform just found to the src image
+  cv::Mat output;
   cv::warpPerspective(image, output, lambda, cv::Size(size, size));
+  return output;
+}
+
+int createReference(const std::string &filename, const std::string &refname, const int& size) {
+  // Load the image
+  cv::Mat image = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
+  // Output image
+  cv::Mat output = transformImage(image, size);
+
+  //Display output
+  cv::imshow("Output",output);
+  cv::imwrite(refname, output);
+
+  cv::waitKey(0);
+  return EXIT_SUCCESS;
+}
+
+int getPieces(const std::string &filename, const std::string &refname) {
+  // Load the image
+  cv::Mat image = cv::imread(filename, CV_LOAD_IMAGE_COLOR);
+  // Load reference image
+  cv::Mat reference = cv::imread(refname, CV_LOAD_IMAGE_COLOR);
+  int size = reference.size().height;
+
+  // Output image
+  cv::Mat output = transformImage(image, size);
 
   //Display output
   cv::destroyWindow(filename);
