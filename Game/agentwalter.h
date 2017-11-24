@@ -3,16 +3,25 @@
 
 #include "checkersagent.h"
 #include <limits>
+#include <algorithm>
 
 class AgentWalter : public CheckersAgent {
 public:
-  AgentWalter();
+  AgentWalter(PieceType self, int maxDepth);
   virtual ~AgentWalter();
-  virtual Word make_move(CheckerBoard &b);
+  virtual Word make_move(const CheckerBoard &board);
 
-  int score(CheckerBoard &old_board, CheckerBoard &new_board, PieceType player);
-  int negamax();
-  int minimax(CheckerBoard &old_board, CheckerBoard &new_board, int depth, int alpha, int beta, PieceType maximizingPlayer);
+  int score(const CheckerBoard &old_board, const CheckerBoard &board);
+
+  int negamax(const CheckerBoard &old_board, const CheckerBoard &board, int depth, int alpha, int beta, int color);
+
+  int maxi(const CheckerBoard &old_board, const CheckerBoard &board, int depth, int alpha, int beta);
+  int mini(const CheckerBoard &old_board, const CheckerBoard &board, int depth, int alpha, int beta);
+
+  PieceType self;
+  PieceType enemy;
+
+  int maxDepth;
 
 };
 
