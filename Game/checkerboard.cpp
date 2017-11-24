@@ -125,7 +125,7 @@ void CheckerBoard::add_move(std::vector<Word>& arr, Word move, Word movers, int 
 }
 
 // List all available moves
-std::vector<Word> CheckerBoard::get_moves() {
+std::vector<Word> CheckerBoard::get_moves() const {
   // If we are in a "jump chain" we have to jump directly to the next destination
   if (jumping) return mandatory_jumps;
 
@@ -158,7 +158,7 @@ std::vector<Word> CheckerBoard::get_moves() {
 }
 
 // List all available jumps
-std::vector<Word> CheckerBoard::get_jumps() {
+std::vector<Word> CheckerBoard::get_jumps() const {
   // Jumpers are pieces that CAN jump
   Word fj7 = forward_jumpers7();
   Word fj9 = forward_jumpers9();
@@ -179,13 +179,13 @@ std::vector<Word> CheckerBoard::get_jumps() {
 }
 
 // Check if the game is a draw
-bool CheckerBoard::is_draw() {
+bool CheckerBoard::is_draw() const {
   // TODO : Implementation not present yet
   return false;
 }
 
 // Check if the game is over
-bool CheckerBoard::is_over() {
+bool CheckerBoard::is_over() const {
   // The game is over if the active player has no move left or if it's a draw
   return !(get_moves().size()) || is_draw();
 }
@@ -194,56 +194,56 @@ bool CheckerBoard::is_over() {
 // Forward/Backward indicates the direction, 3/4/5 and 7/9 the distance (in bits of the bitboard) from origin to destination
 // The main principle is to bitshift empty space and OR with present pieces to check for empty cells
 // Masks "MASK_*" defines which cells can actually be moved in a certain direction. (ex. MASK_R3 means all the cells that can shift right 3 bits)
-Word CheckerBoard::forward_movers3() {
+Word CheckerBoard::forward_movers3() const {
   return ((empty & MASK_R3) >> 3) & forward[active];
 }
 
-Word CheckerBoard::forward_movers4() {
+Word CheckerBoard::forward_movers4() const {
   return (empty >> 4) & forward[active];
 }
 
-Word CheckerBoard::forward_movers5() {
+Word CheckerBoard::forward_movers5() const {
   return ((empty & MASK_R5) >> 5) & forward[active];
 }
 
-Word CheckerBoard::backward_movers3() {
+Word CheckerBoard::backward_movers3() const {
   return ((empty & MASK_L3) << 3) & backward[active];
 }
 
-Word CheckerBoard::backward_movers4() {
+Word CheckerBoard::backward_movers4() const {
   return (empty << 4) & backward[active];
 }
 
-Word CheckerBoard::backward_movers5() {
+Word CheckerBoard::backward_movers5() const {
   return ((empty & MASK_L5) << 5) & backward[active];
 }
 
-Word CheckerBoard::forward_jumpers7() {
+Word CheckerBoard::forward_jumpers7() const {
   Word victims4 = (empty >> 4) & pieces[passive];
   Word victims3 = ((empty & MASK_R3) >> 3) & pieces[passive];
   return (((victims4 & MASK_R3) >> 3) | (victims3 >> 4)) & forward[active];
 }
 
-Word CheckerBoard::forward_jumpers9() {
+Word CheckerBoard::forward_jumpers9() const {
   Word victims4 = (empty >> 4) & pieces[passive];
   Word victims5 = ((empty & MASK_R5) >> 5) & pieces[passive];
   return (((victims4 & MASK_R5) >> 5) | (victims5 >> 4)) & forward[active];
 }
 
-Word CheckerBoard::backward_jumpers7() {
+Word CheckerBoard::backward_jumpers7() const {
   Word victims4 = (empty << 4) & pieces[passive];
   Word victims3 = ((empty & MASK_L3) << 3) & pieces[passive];
   return (((victims4 & MASK_L3) << 3) | (victims3 << 4)) & backward[active];
 }
 
-Word CheckerBoard::backward_jumpers9() {
+Word CheckerBoard::backward_jumpers9() const {
   Word victims4 = (empty << 4) & pieces[passive];
   Word victims5 = ((empty & MASK_L5) << 5) & pieces[passive];
   return (((victims4 & MASK_L5) << 5) | (victims5 << 4)) & backward[active];
 }
 
 // Utility function that translate a move to "Move XX to YY"
-std::string CheckerBoard::to_string(Word move) {
+std::string CheckerBoard::to_string(Word move) const {
   int origin = __builtin_ctzl(move & pieces[active]);
   int destination = __builtin_ctzl(move & empty);
   return "Move : " + std::to_string(origin) + " to " + std::to_string(destination);

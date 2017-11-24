@@ -9,7 +9,7 @@ class AgentKevin : public CheckersAgent {
 public:
   AgentKevin();
   virtual ~AgentKevin();
-  virtual Word make_move(CheckerBoard &b);
+  virtual Word make_move(const CheckerBoard &board);
 };
 
 #endif // AGENTKEVIN_H

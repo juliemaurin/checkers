@@ -1,12 +1,14 @@
 #include <iostream>
 #include "checkerboard.h"
 #include "agentkevin.h"
+#include "agentwalter.h"
 
 int main() {
   // Test script for AI vs. AI
   CheckerBoard B;
   CheckersAgent *Black = new AgentKevin();
-  CheckersAgent *White = new AgentKevin();
+  CheckersAgent *White = new AgentWalter(CheckerBoard::WHITE, 6);
+
   PieceType current_player = B.active;
   Word move;
   int turn = 1;
@@ -20,6 +22,7 @@ int main() {
       current_player = B.active;
 
       turn++;
+      std::cout << "Tour : " << turn << std::endl;
       while(!B.is_over() && B.active == current_player) {
           move = White->make_move(B);
           std::cout << B.to_string(move) << std::endl;
