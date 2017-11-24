@@ -11,7 +11,7 @@ int main() {
 
   CheckerBoard B;
   CheckersAgent *Black = new AgentKevin();
-  CheckersAgent *White = new AgentWalter(CheckerBoard::WHITE, 6);
+  CheckersAgent *White = new AgentWalter(CheckerBoard::WHITE, 10);
 
   PieceType current_player = B.active;
   Word move;
