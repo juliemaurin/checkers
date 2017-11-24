@@ -1,8 +1,6 @@
 #ifndef AGENTKEVIN_H
 #define AGENTKEVIN_H
 
-#include <cstdlib>
-#include <vector>
 #include "checkersagent.h"
 
 class AgentKevin : public CheckersAgent {

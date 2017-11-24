@@ -11,6 +11,7 @@ public:
   virtual ~AgentWalter();
   virtual Word make_move(const CheckerBoard &board);
 
+private:
   int score(const CheckerBoard &old_board, const CheckerBoard &board, int depth);
 
   int negamax(const CheckerBoard &old_board, const CheckerBoard &board, int depth, int alpha, int beta, int color);
