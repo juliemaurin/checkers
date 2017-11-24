@@ -1,10 +1,14 @@
 #include <iostream>
+#include <ctime>
+#include <cstdlib>
 #include "checkerboard.h"
 #include "agentkevin.h"
 #include "agentwalter.h"
 
 int main() {
   // Test script for AI vs. AI
+  std::srand(std::time(0));
+
   CheckerBoard B;
   CheckersAgent *Black = new AgentKevin();
   CheckersAgent *White = new AgentWalter(CheckerBoard::WHITE, 6);
