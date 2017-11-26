@@ -1,6 +1,6 @@
 #include "agentwalter.h"
 
-AgentWalter::AgentWalter(PieceType self, int maxDepth) : self(self), maxDepth(maxDepth) {
+AgentWalter::AgentWalter(PieceType self, int max_depth) : self(self), max_depth(max_depth) {
   // TODO : Do something else, this is ugly
   if (self == CheckerBoard::WHITE) enemy = CheckerBoard::BLACK;
   else enemy = CheckerBoard::WHITE;
@@ -17,7 +17,7 @@ Word AgentWalter::make_move(const CheckerBoard &board) {
   std::vector<Word>::size_type index = 0;
 
   int value = std::numeric_limits<int>::min();
-  int depth = maxDepth;
+  int depth = max_depth;
 
   for(const Word &move : board.get_moves()) {
       CheckerBoard new_board = CheckerBoard(board);

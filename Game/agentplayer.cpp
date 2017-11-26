@@ -1,7 +1,6 @@
 #include "agentplayer.h"
 
-AgentPlayer::AgentPlayer()
-{
+AgentPlayer::AgentPlayer(PieceType self) : self(self) {
 
 }
 
@@ -10,10 +9,20 @@ AgentPlayer::~AgentPlayer() {
 }
 
 Word AgentPlayer::make_move(const CheckerBoard &board) {
-  // Kevin always choose a move randomly.
-  // Kevin is dumb.
-  // Don't be like Kevin.
   std::vector<Word> moves = board.get_moves();
-  std::vector<Word>::size_type n = static_cast<std::vector<Word>::size_type>(std::rand() % static_cast<int>(moves.size()));
-  return moves.at(n);
+  std::vector<Word>::size_type choice = moves.size() + 1;
+
+  int index = 0;
+  for (const Word& move : moves) std::cout << "Move " << index++ << ": " << board.to_string(move) << std::endl;
+
+  do {
+      std::cout << "Please input a number between 0 and " << moves.size() - 1 << " : ";
+      if (std::cin.fail()) {
+          std::cin.clear();
+          std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+      }
+      std::cin >> choice;
+  } while(choice >= moves.size() || std::cin.fail());
+
+  return moves.at(choice);
 }
