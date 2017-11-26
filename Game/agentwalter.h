@@ -7,7 +7,7 @@
 
 class AgentWalter : public CheckersAgent {
 public:
-  AgentWalter(PieceType self, int maxDepth);
+  AgentWalter(PieceType self, int max_depth);
   virtual ~AgentWalter();
   virtual Word make_move(const CheckerBoard &board);
 
@@ -22,7 +22,7 @@ private:
   PieceType self;
   PieceType enemy;
 
-  int maxDepth;
+  int max_depth;
 
 };
 

@@ -246,7 +246,7 @@ Word CheckerBoard::backward_jumpers9() const {
 std::string CheckerBoard::to_string(Word move) const {
   int origin = __builtin_ctzl(move & pieces[active]);
   int destination = __builtin_ctzl(move & empty);
-  return "Move : " + std::to_string(origin) + " to " + std::to_string(destination);
+  return std::to_string(origin) + " to " + std::to_string(destination);
 }
 
 // Overload of operator<< to display ASCII art of a bitboard
