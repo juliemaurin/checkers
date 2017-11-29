@@ -20,7 +20,7 @@ Word AgentWalter::make_move(const CheckerBoard &board) {
   int depth = max_depth;
 
   for(const Word &move : board.get_moves()) {
-      CheckerBoard new_board = CheckerBoard(board);
+      CheckerBoard new_board(board);
       new_board.make_move(move);
       int new_value;
 
@@ -42,7 +42,7 @@ Word AgentWalter::make_move(const CheckerBoard &board) {
 }
 
 int AgentWalter::score(const CheckerBoard &old_board, const CheckerBoard &board, int depth) {
-  // Score should return the odds of wining for player taking the move old_board->board
+  // Score should return the odds of wining for player taking the move old_board.board
   // old_board.active is the "player"
   // On draw
   if (old_board.is_draw() || board.is_draw()) return 0;
@@ -77,7 +77,7 @@ int AgentWalter::negamax(const CheckerBoard &old_board, const CheckerBoard &boar
   int v = std::numeric_limits<int>::min();
 
   for(const Word &move : board.get_moves()) {
-      CheckerBoard new_board = CheckerBoard(board);
+      CheckerBoard new_board(board);
       new_board.make_move(move);
 
       if (new_board.active != board.active) {
@@ -96,7 +96,7 @@ int AgentWalter::maxi(const CheckerBoard &old_board, const CheckerBoard &board, 
   if (!depth || board.is_over()) return score(old_board, board, depth);
   int max = std::numeric_limits<int>::min();
   for (const Word &move : board.get_moves()) {
-      CheckerBoard new_board = CheckerBoard(board);
+      CheckerBoard new_board(board);
       new_board.make_move(move);
       int score;
       if (new_board.active != board.active) {
@@ -116,7 +116,7 @@ int AgentWalter::mini(const CheckerBoard &old_board, const CheckerBoard &board, 
   if (!depth || board.is_over()) return -score(old_board, board, depth);
   int min = std::numeric_limits<int>::max();
   for (const Word &move : board.get_moves()) {
-      CheckerBoard new_board = CheckerBoard(board);
+      CheckerBoard new_board(board);
       new_board.make_move(move);
       int score;
       if (new_board.active != board.active) {
