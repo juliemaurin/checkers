@@ -57,6 +57,9 @@ void play(const std::string black_agent, const std::string white_agent) {
   if (B.is_draw()) std::cout << "It's a draw !" << std::endl;
   else if(B.active == CheckerBoard::WHITE) std::cout << "Congrats Black, you win!" << std::endl;
   else std::cout << "Congrats White, you win!" << std::endl;
+
+  delete black;
+  delete white;
 }
 
 void usage(std::string argv0) {

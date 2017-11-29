@@ -13,6 +13,9 @@ typedef unsigned char PieceType;
 class CheckerBoard {
 public:
     CheckerBoard();
+    ~CheckerBoard();
+    CheckerBoard(const CheckerBoard &b);
+
     static const PieceType BLACK;
     static const PieceType WHITE;
 
@@ -26,8 +29,7 @@ public:
 
     void make_move(Word move);
 
-    CheckerBoard *peek_move(Word move);
-    std::vector<Word> get_moves() const;
+    const std::vector<Word> &get_moves() const;
 
     bool is_draw() const;
     bool is_over() const;
@@ -59,13 +61,15 @@ private:
 
     bool jumping;
 
-    std::vector<Word> mandatory_jumps;
-
     void new_game();
 
-    static void add_move(std::vector<Word>& arr, Word move, Word movers, int offset);
+    static void add_move(std::vector<Word> &arr, Word move, Word movers, int offset);
 
-    std::vector<Word> get_jumps() const;
+    std::vector<Word> current_moves;
+    std::vector<Word> current_jumps;
+
+    void gen_moves();
+    void gen_jumps();
 
     Word forward_movers3() const;
     Word forward_movers4() const;
