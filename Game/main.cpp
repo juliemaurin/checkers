@@ -6,9 +6,10 @@
 #include "agentwalter.h"
 #include "agentplayer.h"
 
+#include "tcphelper.h"
+
 void play(const std::string black_agent, const std::string white_agent) {
   std::srand(std::time(0));
-
   CheckerBoard B;
   CheckersAgent *black;
   CheckersAgent *white;

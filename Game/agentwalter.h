@@ -2,6 +2,7 @@
 #define AGENTWALTER_H
 
 #include "checkersagent.h"
+#include "tcphelper.h"
 #include <limits>
 #include <algorithm>
 

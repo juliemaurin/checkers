@@ -2,6 +2,7 @@
 #define AGENTKEVIN_H
 
 #include "checkersagent.h"
+#include "tcphelper.h"
 
 class AgentKevin : public CheckersAgent {
 public:
