@@ -1,9 +1,5 @@
-#include <iostream>
-#include <bitset>
-#include <opencv2/opencv.hpp>
+#include "vision.h"
 
-using namespace cv;
-using namespace std;
 
 // onMouse event callback function
 void onMouse(int event, int x, int y, int flags, void* data) {
@@ -177,15 +173,15 @@ int getPieces(const string &filename, const string &refname) {
    morphologyEx(diff_w, diff_w,MORPH_CLOSE, kernel);
    imshow("After closing", diff_w);
    Mat diff_w_gray, diff_b_gray;
-   cvtColor( diff_w, diff_w_gray, CV_BGR2GRAY );
+     cvtColor( diff_w, diff_w_gray, CV_BGR2GRAY );
    cvtColor( diff_b, diff_b_gray, CV_BGR2GRAY );
    //threshold( diff_w_gray, diff_w_gray,30, 255,THRESH_BINARY_INV  ); 
-   threshold( diff_w_gray, diff_w_gray, 20,255,THRESH_BINARY);
-   imshow("After thresh",diff_w_gray);
+    threshold( diff_w_gray, diff_w_gray, 20,255,THRESH_BINARY);
+      imshow("After thresh",diff_w_gray);
    
    cvtColor(diff_b_gray, diff_b_gray, COLOR_GRAY2BGR);
    imshow("After gray",diff_b_gray);
-   Mat difference;
+   Mat difference;//=diff_w.clone();
    cvtColor(diff_w_gray, difference, CV_GRAY2BGR );
    
    
@@ -195,9 +191,9 @@ int getPieces(const string &filename, const string &refname) {
    
   
    // Initialize bitboard
-  unsigned long w_pieces = 0;
+   w_pieces = 0;
   
-  unsigned long b_pieces = 0;
+   b_pieces = 0;
   
   // Loop by line
   for(int j = 7; j >= 0; --j) {
@@ -220,8 +216,8 @@ int getPieces(const string &filename, const string &refname) {
       // cv::imshow(std::to_string(num), roi);
       
       // Convert to HSV to get Value
-      int threshold_r = 23;
-      int threshold_v = 30;
+      int threshold_r = 15;
+      int threshold_v = 10;
       Scalar mean_bgr = mean(roi);
       cvtColor(roi, roi, COLOR_BGR2HSV);
       Scalar mean_hsv =mean(roi);
