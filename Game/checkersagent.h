@@ -6,7 +6,7 @@
 class CheckersAgent {
 public:
   virtual ~CheckersAgent() {}
-  virtual Word make_move(CheckerBoard &b) = 0;
+  virtual Word make_move(const CheckerBoard &board) = 0;
 };
 
 #endif // CHECKERSAGENT_H
