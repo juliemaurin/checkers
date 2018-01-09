@@ -1,19 +1,16 @@
 #ifndef TCPHELPER_H
 #define TCPHELPER_H
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include <unistd.h>
+// POSIX Socket headers
+#include <sys/socket.h> // AF_INET, SOCK_STREAM, socket(), connect()
+#include <netdb.h> // getaddrinfo()
+#include <unistd.h> // read(), write(), close() (File descriptor operations)
 
 #include <iostream>
-#include <cstring>
 
-class TCPHelper
-{
+class TCPHelper {
 public:
-    TCPHelper(std::string name, std::string message);
+    TCPHelper(const std::string &name, const std::string &port, const std::string &input);
 };
 
 #endif // TCPHELPER_H

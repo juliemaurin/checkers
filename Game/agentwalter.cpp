@@ -38,7 +38,7 @@ Word AgentWalter::make_move(const CheckerBoard &board) {
       index++;
   }
   std::cout << "Move Value : " << value << std::endl;
-  TCPHelper("127.0.0.1", board.to_string(moves.at(best_move)));
+  TCPHelper("127.0.0.1", "10000", board.to_string(moves.at(best_move)));
   return moves.at(best_move);
 }
 

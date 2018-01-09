@@ -1,50 +1,38 @@
 #include "tcphelper.h"
 
-TCPHelper::TCPHelper(std::string name, std::string message) {
-    struct sockaddr_in serv_addr;
-    struct hostent *server;
+TCPHelper::TCPHelper(const std::string &hostname, const std::string &port, const std::string &input) {
+    struct addrinfo hints = {};
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
 
-    char buffer_in[256];
+    struct addrinfo *server;
 
-    int portno = 10000;
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-    if (sockfd < 0)
-        std::cerr << "ERROR opening socket" << std::endl;
-
-    server = gethostbyname(name.c_str());
-
-    if (server == NULL) {
-        std::cerr << "ERROR, no such host\n" << std::endl;
-        return;
+    if (getaddrinfo(hostname.c_str(), port.c_str(), &hints, &server)) {
+        throw std::runtime_error("TCPHelper : No such host");
     }
 
-    bzero((char *)&serv_addr, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr, (char *)&serv_addr.sin_addr.s_addr, server->h_length);
-    serv_addr.sin_port = htons(portno);
+    int sockfd = socket(server->ai_family, server->ai_socktype, server->ai_protocol);
+    if (sockfd < 0) {
+        throw std::runtime_error("TCPHelper : Failed to open socket");
+    }
 
-    if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0)
-        std::cerr << "ERROR connecting" << std::endl;
+    if (connect(sockfd, server->ai_addr, server->ai_addrlen) < 0) {
+        throw std::runtime_error("TCPHelper : Failed to connect to host");
+    }
 
-    printf("Please enter the message: ");
+    if (write(sockfd, input.c_str(), input.length()) < 0) {
+        throw std::runtime_error("TCPHelper : Failed to write to socket");
+    }
 
-    //bzero(buffer, 256);
-    //std::cin >> buffer;
-    int n = write(sockfd, message.c_str(), message.length());
-
-    if (n < 0)
-         std::cerr << "ERROR writing to socket" << std::endl;
-
-    //bzero(buffer,256);
-    n = read(sockfd, buffer_in, 255);
-
-    if (n < 0)
-         std::cerr << "ERROR reading from socket" << std::endl;
-
-    std::cout << buffer_in << std::endl;
+    const int obuf_size = 256;
+    char obuf[obuf_size];
+    if (read(sockfd, obuf, obuf_size) < 0) {
+        throw std::runtime_error("TCPHelper : Failed to read from socket");
+    }
 
     close(sockfd);
 
-    return;
+    freeaddrinfo(server);
+
+    std::cout << obuf << std::endl;
 }
