@@ -80,25 +80,8 @@ int createReference(const string &filename, const string &refname, const int& si
 }
 
 
-Mat inverseReference(Mat ref) {
-  Mat inverse;
-  // One Row Size
-  int c = ref.rows / 8;
-  //Cut
-  Mat resultUp = ref(Rect(0,0,ref.cols,c));
-  Mat resultDown = ref(Rect(0,c,ref.cols,ref.rows-c));
 
-  //concatinate
-  vconcat(resultDown,resultUp, inverse);
-
-  //imwrite("Up.png",resultUp);
-  //imwrite("down.png",resultDown);
-  imwrite("inverse.png",inverse);
-  return inverse;
-}
-
-
-int getPieces(const string &filename, const string &refname) {
+string getPieces(const string &filename, const string &refname) {
   // Load the image
   Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
   // Load reference image
@@ -118,37 +101,18 @@ int getPieces(const string &filename, const string &refname) {
   
   Mat diff_w,diff_b, white ,plus;
   plus = output.clone();
-  // Compute difference between image and reference (To detect the White)
+  // Compute difference between image and reference
   absdiff(output , reference, diff_b);
   diff_w = output - reference;
   
   for(int j = 0; j <= 5; j++) {
-      plus += diff_b;
+  plus += diff_b;
   }
 
-  //Compute inverse reference
-  //inv_ref=inverseReference(reference);
-
-  //Compute difference between image and inverse reference (To detect the black)
-  //inv_diff=output-inv_ref;
-  
-  //threshold(difference,difference, 80, 255,THRESH_BINARY);
-  //erode(difference, difference, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size( size / 20, size / 20)));
    
   imshow("Difference", diff_b);
   imshow("plus",plus);
    
-  //Convert BGR to HSV
-  //Mat hsv;
-  //cvtColor(output,hsv ,COLOR_BGR2HSV);
-  //green
-   
-  //inRange(output, Scalar(0, 50, 0), Scalar(255, 100, 255), white);
-  //brown BGR
-  //inRange(hsv, Scalar(0, 50, 0), Scalar(255, 100, 255), white);
-   
-  //inRange(plus,Scalar(150,130,60), Scalar(220,193,140),white);
-  //imshow("black",white);
    
   //Contrast treatement
   Mat contrast_diff1,contrast_ref,contrast_black;
@@ -177,7 +141,7 @@ int getPieces(const string &filename, const string &refname) {
    
   cvtColor(diff_b_gray, diff_b_gray, COLOR_GRAY2BGR);
   imshow("After gray",diff_b_gray);
-  Mat difference;//=diff_w.clone();
+  Mat difference;
   cvtColor(diff_w_gray, difference, CV_GRAY2BGR );
 
   // Split image in rectangles to detect presence of cells
@@ -239,7 +203,22 @@ int getPieces(const string &filename, const string &refname) {
   
   cout << "(Black) BOARD : " << bitset<32>(b_pieces) << " (" << b_pieces << ")" << endl;
   cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
-
+  string pieces= to_string(w_pieces)+"+"+ to_string(b_pieces);
+      cerr<<" white + Black (sent to AI) : "<<pieces<<endl;
   waitKey(0);
-  return EXIT_SUCCESS;
+  return pieces;
 }
+
+int connectedGetPieces(const string &filename, const string &refname) {
+  //TODO: Change parameters & split TCPHelper constructer's content into functions
+  // TCPHelper soc= TCPHelper("127.0.0.1", "10000");
+  //while(1){
+   
+    //    if(soc.recieve()=="1"){
+    string pieces= getPieces( filename, refname);
+
+    //soc.send(pieces);
+    //}  
+    //}
+  return EXIT_SUCCESS;
+} 

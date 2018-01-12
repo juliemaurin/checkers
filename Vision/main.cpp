@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
   string mode = argv[1];
 
   if (mode == "create") return createReference(argv[2], argv[3], atoi(argv[4]));
-  else if (mode == "parse") return getPieces(argv[2], argv[3]);
+  else if (mode == "parse") return connectedGetPieces(argv[2], argv[3]);
   else {
      cout << "Unknown mode '" << mode << "', see ./checkersvision for usage." << endl;
       return EXIT_FAILURE;
