@@ -1,8 +1,7 @@
 #include "vision.h"
 
-
 // onMouse event callback function
-void onMouse(int event, int x, int y, int flags, void* data) {
+void onMouse(int event, int x, int y, int, void* data) {
     if(event == CV_EVENT_LBUTTONDOWN) {
         vector<Point2f>* v = static_cast <vector<Point2f>*>(data);
         v->push_back(Point2f(x, y));
@@ -45,7 +44,7 @@ Mat transformImage(const Mat &image, const int& size) {
   // These four pts are the sides of the rect box used as input
   // This step is to tranform our vect to an array (ugly)
   cout << "Angle coordinates : " << endl;
-  for (vector<Point2f>::size_type i = 0; i < input_vect.size(); ++i) {
+  for (size_t i = 0; i < input_vect.size(); ++i) {
       input_quad[i] = input_vect[i];
       // We also display point coordinates in stdout
       cout << "Point " << i + 1 << " : (" << input_quad[i].x << ", " << input_quad[i].y << ")" << endl;
@@ -81,23 +80,22 @@ int createReference(const string &filename, const string &refname, const int& si
 }
 
 
-Mat inverseReference(Mat ref){
-
+Mat inverseReference(Mat ref) {
   Mat inverse;
   // One Row Size
-  int c=(int)ref.rows/8.;
+  int c = ref.rows / 8;
   //Cut
-  Mat resultUp=ref(Rect(0,0,ref.cols,c));
-  Mat resultDown= ref(Rect(0,c,ref.cols,ref.rows-c));
-  //concatinate 
+  Mat resultUp = ref(Rect(0,0,ref.cols,c));
+  Mat resultDown = ref(Rect(0,c,ref.cols,ref.rows-c));
+
+  //concatinate
   vconcat(resultDown,resultUp, inverse);
+
   //imwrite("Up.png",resultUp);
-  //  imwrite("down.png",resultDown);
+  //imwrite("down.png",resultDown);
   imwrite("inverse.png",inverse);
   return inverse;
-  
 }
-
 
 
 int getPieces(const string &filename, const string &refname) {
@@ -107,93 +105,88 @@ int getPieces(const string &filename, const string &refname) {
   Mat reference = imread(refname, CV_LOAD_IMAGE_COLOR);
   int size = reference.size().height;
   //Resize image to be visible in all cases
-   resize(image, image, reference.size(), 0, 0, CV_INTER_LINEAR);
+  resize(image, image, reference.size(), 0, 0, CV_INTER_LINEAR);
 
   // Output image
-   Mat output = transformImage(image, size);
+  Mat output = transformImage(image, size);
 
-   //Display output
-   destroyWindow(filename);
+  //Display output
+  destroyWindow(filename);
+
   imshow("Output", output);
-  //  cv::imshow("Reference", reference);
+  //imshow("Reference", reference);
   
   Mat diff_w,diff_b, white ,plus;
-  plus=output.clone();
+  plus = output.clone();
   // Compute difference between image and reference (To detect the White)
-   absdiff(output , reference, diff_b);
-   diff_w=output-reference;
+  absdiff(output , reference, diff_b);
+  diff_w = output - reference;
   
-   for(int j=0;j<=5;j++){
-    plus=plus+diff_b;
+  for(int j = 0; j <= 5; j++) {
+      plus += diff_b;
   }
 
   //Compute inverse reference
-  // inv_ref=inverseReference(reference);
+  //inv_ref=inverseReference(reference);
 
   //Compute difference between image and inverse reference (To detect the black)
-  //  inv_diff=output-inv_ref;
+  //inv_diff=output-inv_ref;
   
-  // threshold(difference,difference, 80, 255,THRESH_BINARY);
-  // erode(difference, difference, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size( size / 20, size / 20)));
+  //threshold(difference,difference, 80, 255,THRESH_BINARY);
+  //erode(difference, difference, cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size( size / 20, size / 20)));
    
+  imshow("Difference", diff_b);
+  imshow("plus",plus);
+   
+  //Convert BGR to HSV
+  //Mat hsv;
+  //cvtColor(output,hsv ,COLOR_BGR2HSV);
+  //green
+   
+  //inRange(output, Scalar(0, 50, 0), Scalar(255, 100, 255), white);
+  //brown BGR
+  //inRange(hsv, Scalar(0, 50, 0), Scalar(255, 100, 255), white);
+   
+  //inRange(plus,Scalar(150,130,60), Scalar(220,193,140),white);
+  //imshow("black",white);
+   
+  //Contrast treatement
+  Mat contrast_diff1,contrast_ref,contrast_black;
+  double alpha = 10; //< Simple contrast control
+  int beta = 0;  //< Simple brightness control
+  diff_b.convertTo(contrast_diff1, -1, alpha, beta);
+  imshow("contrast apres premier difference",contrast_diff1);
+   
+  
+  // Morphological opening and closing to filter noise
+  int morph_size = size / 20;
+  Mat kernel = getStructuringElement(CV_SHAPE_ELLIPSE, Size(morph_size, morph_size)) * 255;
+  //  std::cout << "Morph kernel : " << std::endl;
+  //  std::cout << kernel << std::endl;
+  morphologyEx(diff_w, diff_w, MORPH_OPEN, kernel);
+  //  cv::imshow("After opening", difference);
+   
+  morphologyEx(diff_w, diff_w,MORPH_CLOSE, kernel);
+  imshow("After closing", diff_w);
+  Mat diff_w_gray, diff_b_gray;
+  cvtColor( diff_w, diff_w_gray, CV_BGR2GRAY );
+  cvtColor( diff_b, diff_b_gray, CV_BGR2GRAY );
+  //threshold( diff_w_gray, diff_w_gray,30, 255,THRESH_BINARY_INV  );
+  threshold( diff_w_gray, diff_w_gray, 20,255,THRESH_BINARY);
+  imshow("After thresh",diff_w_gray);
+   
+  cvtColor(diff_b_gray, diff_b_gray, COLOR_GRAY2BGR);
+  imshow("After gray",diff_b_gray);
+  Mat difference;//=diff_w.clone();
+  cvtColor(diff_w_gray, difference, CV_GRAY2BGR );
 
-   imshow("Difference", diff_b);
-   imshow("plus",plus);
-   
-   
-   
-   // Convert BGR to HSV
-   //Mat  hsv;
-   //  cvtColor(output,hsv ,COLOR_BGR2HSV);
-   //green
-   
-   //  inRange(output, Scalar(0, 50, 0), Scalar(255, 100, 255), white);
-   //brown BGR
-   //  inRange(hsv, Scalar(0, 50, 0), Scalar(255, 100, 255), white);
-   
-   // inRange(plus,Scalar(150,130,60), Scalar(220,193,140),white);
-   //imshow("black",white);
-   
-   //Contrast treatement
-   Mat contrast_diff1,contrast_ref,contrast_black;
-   double alpha=10; //< Simple contrast control 
-   int beta=0;  //< Simple brightness control 
-   diff_b.convertTo(contrast_diff1, -1, alpha, beta);
-   imshow("contrast apres premier difference",contrast_diff1);
+  // Split image in rectangles to detect presence of cells
+  int rect_size = size / 8;
    
   
-   // Morphological opening and closing to filter noise
-   int morph_size = size / 20;
-   Mat kernel = getStructuringElement(CV_SHAPE_ELLIPSE, Size(morph_size, morph_size)) * 255;
-   //  std::cout << "Morph kernel : " << std::endl;
-   //  std::cout << kernel << std::endl;
-   morphologyEx(diff_w, diff_w, MORPH_OPEN, kernel);
-   //  cv::imshow("After opening", difference);
-   
-   morphologyEx(diff_w, diff_w,MORPH_CLOSE, kernel);
-   imshow("After closing", diff_w);
-   Mat diff_w_gray, diff_b_gray;
-     cvtColor( diff_w, diff_w_gray, CV_BGR2GRAY );
-   cvtColor( diff_b, diff_b_gray, CV_BGR2GRAY );
-   //threshold( diff_w_gray, diff_w_gray,30, 255,THRESH_BINARY_INV  ); 
-    threshold( diff_w_gray, diff_w_gray, 20,255,THRESH_BINARY);
-      imshow("After thresh",diff_w_gray);
-   
-   cvtColor(diff_b_gray, diff_b_gray, COLOR_GRAY2BGR);
-   imshow("After gray",diff_b_gray);
-   Mat difference;//=diff_w.clone();
-   cvtColor(diff_w_gray, difference, CV_GRAY2BGR );
-   
-   
-   
-   // Split image in rectangles to detect presence of cells
-   int rect_size = size / 8;
-   
-  
-   // Initialize bitboard
-   w_pieces = 0;
-  
-   b_pieces = 0;
+  // Initialize bitboard
+  w_pieces = 0;
+  b_pieces = 0;
   
   // Loop by line
   for(int j = 7; j >= 0; --j) {
@@ -231,44 +224,22 @@ int getPieces(const string &filename, const string &refname) {
       cout << index << " : (" << rect_x << ", " << rect_y << ")" << endl;
       // std::cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
       if (mean_hsv.val[2] > threshold_v) {
-	cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
-              cout << "WHITE PIECE FOUND";
-              w_pieces |= cell;
-      }
-	    else if (mean_hsv_b.val[2] > threshold_r) {
-	      cout << "    BGR b " << mean_bgr_b << " HSV b" << mean_hsv_b;
-              cout << "BLACK PIECE FOUND";
-              b_pieces |= cell;
-	    }
-	    else
+        cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
+        cout << "WHITE PIECE FOUND";
+        w_pieces |= cell;
+      } else if (mean_hsv_b.val[2] > threshold_r) {
+        cout << "    BGR b " << mean_bgr_b << " HSV b" << mean_hsv_b;
+        cout << "BLACK PIECE FOUND";
+        b_pieces |= cell;
+      } else
 	      cout << "    BGR" << mean_bgr_b << " HSV" << mean_hsv_b;
       cout << endl;
     }
   }
   
   cout << "(Black) BOARD : " << bitset<32>(b_pieces) << " (" << b_pieces << ")" << endl;
-
-  cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" <<w_pieces << ")" << endl;
+  cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
 
   waitKey(0);
   return EXIT_SUCCESS;
-}
-
-// Main program entry point
-int main(int argc, char *argv[]) {
-  if (argc != 4 && argc != 5) {
-    cout << "Usage : checkersvision create <image> <reference> <size> - To create reference file (of size*size) from image" << endl;
-    cout << "        checkersvision parse <image> <reference> - To parse an image in comparison to reference" << endl;
-      return EXIT_FAILURE;
-  }
-
-  string mode = argv[1];
-
-  if (mode == "create") return createReference(argv[2], argv[3], atoi(argv[4]));
-  else if (mode == "parse") return getPieces(argv[2], argv[3]);
-  else {
-     cout << "Unknown mode '" << mode << "', see ./checkersvision for usage." << endl;
-      return EXIT_FAILURE;
-  }
-
 }
