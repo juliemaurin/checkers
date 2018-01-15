@@ -5,10 +5,16 @@
 #include <bitset>
 #include <opencv2/opencv.hpp>
 #include "../Game/tcphelper.h"
+#include <string>
+#include <fstream>
+
+
 
 using namespace cv;
 using namespace std;
 
+
+static string fichier_ref = "../reference.txt"; 
 static unsigned long w_pieces;
 static unsigned long b_pieces;
 
