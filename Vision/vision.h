@@ -4,7 +4,7 @@
 #include <iostream>
 #include <bitset>
 #include <opencv2/opencv.hpp>
-#include "../Game/tcphelper.h"
+#include "tcphelper.h"
 #include <string>
 #include <fstream>
 

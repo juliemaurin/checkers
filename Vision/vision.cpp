@@ -272,15 +272,22 @@ string getPieces(const string &filename, const string &refname) {
 }
 
 int connectedGetPieces(const string &filename, const string &refname) {
-  //TODO: Change parameters & split TCPHelper constructer's content into functions
-  // TCPHelper soc= TCPHelper("127.0.0.1", "10000");
-  //while(1){
-   
-    //    if(soc.recieve()=="1"){
-    string pieces= getPieces( filename, refname);
-
-    //soc.send(pieces);
-    //}  
-    //}
+  
+  string pieces= getPieces( filename, refname);
+  
+  //TODO1: Set request protocole from the Game side
+  //TODO2: Decomment to test connection between Vision & Game
+  
+  /*string requestForPieces="1";
+  TCPHelper soc= TCPHelper();
+  int sockfd = soc.openSocket("127.0.0.1", "20000");
+  
+  while(1){
+    if(soc.receive(sockfd)==requestForPieces){
+      string pieces= getPieces( filename, refname);
+      soc.send(sockfd , pieces);
+    }  
+  }
+  */
   return EXIT_SUCCESS;
 } 
