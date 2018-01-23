@@ -142,10 +142,10 @@ int createReference(const string &filename, const string &refname, const int& si
 
 
 
-string getPieces(const string &filename, const string &refname) {
+string getPieces(Mat &image, const string &refname) {
 
   // Load the image
-  Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
+    //  Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
   // Load reference image
   Mat reference = imread(refname, CV_LOAD_IMAGE_COLOR);
   int size = reference.size().height;
@@ -267,27 +267,52 @@ string getPieces(const string &filename, const string &refname) {
   cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
   string pieces= to_string(w_pieces)+"+"+ to_string(b_pieces);
       cerr<<" white + Black (sent to AI) : "<<pieces<<endl;
-  waitKey(0);
+  
   return pieces;
 }
 
-int connectedGetPieces(const string &filename, const string &refname) {
+int imageGetPieces(const string &filename,const string &refname){
   
-  string pieces= getPieces( filename, refname);
+  // Load the image
+  Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);  
+  string pieces= getPieces(image, refname);
+  waitKey(0);
+}
+
+int videoGetPieces( const string &refname) {
+  Mat image;
+  VideoCapture cap(1); // open the default camera
+  if(!cap.isOpened())  // check if we succeeded
+    return -1;
   
-  //TODO1: Set request protocole from the Game side
-  //TODO2: Decomment to test connection between Vision & Game
-  
-  /*string requestForPieces="1";
+  string requestForPieces="1";
   TCPHelper soc= TCPHelper();
-  int sockfd = soc.openSocket("127.0.0.1", "20000");
-  
-  while(1){
-    if(soc.receive(sockfd)==requestForPieces){
-      string pieces= getPieces( filename, refname);
-      soc.send(sockfd , pieces);
-    }  
-  }
+  int sockfd = soc.openSocket("0.0.0.0", "20000");
+  listen(sockfd,4);
+  sockaddr_in clientAddr;
+  socklen_t sin_size=sizeof(struct sockaddr_in);
+  int clientSock=accept(sockfd,(struct sockaddr*)&clientAddr, &sin_size);
+  /*    
+  const int obuf_size = 256;
+  char obuf[obuf_size];
   */
+  
+  while(1){   
+    // if (read(sockfd, obuf, obuf_size) >= 0) {
+    //  cout << "recieved data = "<<obuf << endl;
+    cap >> image; // get a new frame from camera
+    string pieces= getPieces(image, refname);
+    if( clientSock!=0){
+      soc.send( clientSock , pieces);
+      cerr<<"The message : "<< pieces <<" was sent to the Game"<<endl;
+      cerr<<endl;
+    }
+    //show captured frame from the video
+    imshow("board", image);
+    waitKey(0); 	 
+  }
+  //close(clientSock);
+  soc.closeSocket(sockfd);
+ 
   return EXIT_SUCCESS;
 } 

@@ -1,7 +1,6 @@
 #include "tcphelper.h"
 
 TCPHelper::TCPHelper() {
-    //  freeaddrinfo(server);
 }
 
 
@@ -22,7 +21,7 @@ string TCPHelper::receive (int sockfd){
         throw runtime_error("TCPHelper : Failed to read from socket");
     }
 
-    cout << obuf << endl; 
+    cout << "recieved data = "<<obuf << endl;
 }
 
 int TCPHelper::openSocket(const string &hostname, const string &port){
@@ -41,11 +40,16 @@ int TCPHelper::openSocket(const string &hostname, const string &port){
         throw runtime_error("TCPHelper : Failed to open socket");
     }
 
-    if (connect(sockfd, server->ai_addr, server->ai_addrlen) < 0) {
-        throw runtime_error("TCPHelper : Failed to connect to host");
-    }
+    if(  bind(sockfd,server->ai_addr, server->ai_addrlen)<0){
+      throw runtime_error("TCPHelper : Failed to bind server socket to server address ");
+	}
+    else
+      cerr<< "Sucess Bind"<<endl;
+    
     return sockfd;
 }
+
+
 
 
 void TCPHelper::closeSocket(int  sockfd ){

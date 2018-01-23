@@ -21,9 +21,10 @@ static unsigned long b_pieces;
 // onMouse event callback function
 void onMouse(int event, int x, int y, int flags, void* data);
 
-Mat transformImage(const cv::Mat &image, const int& size);
-int createReference(const std::string &filename, const std::string &refname, const int& size);
-int connectedGetPieces(const std::string &filename, const std::string &refname);
-string getPieces(const std::string &filename, const std::string &refname); 
+Mat transformImage(const Mat &image, const int& size);
+int createReference(const string &filename, const string &refname, const int& size);
+int videoGetPieces(const string &refname);
+int imageGetPieces(const string &filename,const string &refname);
+string getPieces(Mat &image, const string &refname); 
 
 #endif
