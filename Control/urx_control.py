@@ -8,13 +8,12 @@ from time import sleep
 class Robot:
     def __init__(self):
         self.a = 2 # Tool acceleration (m/s²)
-        self.v = 3 # Tool speed (m/s)
+        self.v = 1.5 #(max=3) # Tool speed (m/s)
         self.payload_weight = 1.2
 
-        self.height_high = 0.06
-        self.height_low = 0.025
+        self.lift_distance = 0.03
+
         self.angles = [2.22, 2.22, -0.01]
-        self.delta = [0.035, -0.035]
 
         # Connect to the robot
         self.rob = urx.Robot("192.168.1.196")
@@ -22,49 +21,93 @@ class Robot:
         self.rob.set_payload(self.payload_weight, (0, 0, 0))
 
         #TODO : Edit this
-        self.reset_pos()
+        #self.reset_pos()
 
-        print "MAKE SURE TO MOVE THE ROBOT TO THE ORIGIN BEFORE START"
+        print "MAKE SURE TO MOVE THE ROBOT TO THE ORIGIN 1 BEFORE START"
         _ = raw_input("(Press enter to continue)")
 
-        self.start = self.rob.getl()[:2]
+        start1 = self.rob.getl()
 
+        print "MAKE SURE TO MOVE THE ROBOT TO THE ORIGIN 2 BEFORE START"
+        _ = raw_input("(Press enter to continue)")
+
+        start2 = self.rob.getl()
+
+        self.delta = [(b - a) / 7.0 for a, b in zip(start1, start2)]
+
+        self.start = start1
+
+        print self.delta
         print self.start
 
+    def get_poses(self, offset):
+        low = [start + offset for start, offset in zip(self.start, offset)]
+        high = low
+        high[2] += self.lift_distance
+        return low, high
+
     def get_pos(self, n):
-        i = n % 4
+        i = 2 * (n % 4)
         j = n // 4
-        dx = 2 * i * self.delta[0]
-        if (j % 2): dx += self.delta[0]
+
+        if (j % 2):
+            i += 1
+
+        dx = i * self.delta[0]
         dy = j * self.delta[1]
-        return dx, dy
+
+        height_low = self.delta[2] * (i + j) / 2.0
+
+        rx = self.delta[2] * (i + j) / 2.0
+        rz = self.delta[3] * (i + j) / 2.0
+        ry = self.delta[4] * (i + j) / 2.0
+
+        return dx, dy, height_low, rx, ry, rz
 
     def move_piece(self, frm, to, wsg):
         # Get "from" positions
         pos_from_offset = self.get_pos(frm)
-        print "From offset = ", pos_from_offset
-        pos_from_high = (self.start[0] + pos_from_offset[0], self.start[1] + pos_from_offset[1], self.height_high, self.angles[0], self.angles[1], self.angles[2])
-        pos_from_low = (self.start[0] + pos_from_offset[0], self.start[1] + pos_from_offset[1], self.height_low, self.angles[0], self.angles[1], self.angles[2])
+        pos_from_low, pos_from_high = self.get_poses(pos_from_offset)
 
         # Get "to" positions
         pos_to_offset = self.get_pos(to)
-        print "To offset = ", pos_to_offset
-        pos_to_high = (self.start[0] + pos_to_offset[0], self.start[1] + pos_to_offset[1], self.height_high, self.angles[0], self.angles[1], self.angles[2])
-        pos_to_low = (self.start[0] + pos_to_offset[0], self.start[1] + pos_to_offset[1], self.height_low, self.angles[0], self.angles[1], self.angles[2])
+        pos_to_low, pos_to_high = self.get_poses(pos_to_offset)
 
+        print "Picking ", frm
         self.rob.movel(pos_from_high, self.a, self.v)
         self.rob.movel(pos_from_low, self.a, self.v)
         wsg.grasp()
-        sleep(0.2)
+        sleep(0.3)
+        self.rob.movel(pos_from_high, self.a, self.v)
+
+        print "Placing ", to
+        self.rob.movel(pos_to_high, self.a, self.v)
+        self.rob.movel(pos_to_low, self.a, self.v)
+        wsg.release()
+        sleep(0.3)
+        self.rob.movel(pos_to_high, self.a, self.v)
+
+    def remove_piece(self, n, wsg):
+        # Get "from" positions
+        pos_from_offset = self.get_pos(n)
+        pos_from_low, pos_from_high = self.get_poses(pos_from_offset)
+
+        # Get "to" positions
+        pos_to_offset = (-2 * self.delta[0], -1 * self.delta[1], 0.0, 0.0, 0.0, 0.0)
+        pos_to_low, pos_to_high = self.get_poses(pos_to_offset)
+
+        print "Removing ", n
+        self.rob.movel(pos_from_high, self.a, self.v)
+        self.rob.movel(pos_from_low, self.a, self.v)
+        wsg.grasp()
+        sleep(0.3)
         self.rob.movel(pos_from_high, self.a, self.v)
 
         self.rob.movel(pos_to_high, self.a, self.v)
         self.rob.movel(pos_to_low, self.a, self.v)
         wsg.release()
-        sleep(0.2)
+        sleep(0.3)
         self.rob.movel(pos_to_high, self.a, self.v)
-
-        sleep(0.1)
 
     def bin_to_move(self, n):
         # Convert to binary string
@@ -81,27 +124,30 @@ class Robot:
 
         return frm, to
 
-    def reset_pos(self):
-        init = (0.63254, -0.20653, self.height_low, self.angles[0], self.angles[1], self.angles[2])
-        self.rob.movel(init, self.a, self.v)
-
 if __name__ == "__main__":
-    # Connect to the Robot
-    print "Connecting to robot..."
-    ur = Robot()
-    p1 = (0.63254, -0.20653, ur.height_low, ur.angles[0], ur.angles[1], ur.angles[2])
-    p2 = (0.63254, -0.20653, ur.height_high, ur.angles[0], ur.angles[1], ur.angles[2])
-    p3 = (p1[0] + (0.035 * 6), p1[1] - (0.035 * 1), ur.height_high, ur.angles[0], ur.angles[1], ur.angles[2])
-    p4 = (p1[0] + (0.035 * 6), p1[1] - (0.035 * 1), ur.height_low, ur.angles[0], ur.angles[1], ur.angles[2])
+    try:
+        import sys
+        # Connect to the Robot
+        print "Connecting to robot"
+        ur = Robot()
 
-    while True:
-        ur.rob.movel(p1, ur.a, ur.v)
-        ur.rob.movel(p2, ur.a, ur.v)
-        ur.rob.movel(p3, ur.a, ur.v)
-        ur.rob.movel(p4, ur.a, ur.v)
-        ur.rob.movel(p3, ur.a, ur.v)
-        ur.rob.movel(p2, ur.a, ur.v)
+        import wsg50_control
+        # Connect to the gripper
+        print "Connecting to grippers"
+        wsg = wsg50_control.WSG50()
+        wsg.connect()
 
+        for i in range(32):
+            ur.remove_piece(i, wsg)
+    except KeyboardInterrupt:
+        print "MANUALY INTERRUPTED"
+    except:
+        print "UNEXPECTED ERROR"
+        print sys.exc_info()
+    finally:
+        ur.rob.stopl()
+        ur.rob.close()
+        wsg.disconnect()
 
 """
 print "Current tool pose is: ",  rob.getl()
