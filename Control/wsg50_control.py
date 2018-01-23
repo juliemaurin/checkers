@@ -51,7 +51,6 @@ class WSG50:
         return crc
 
     def send_message(self, message):
-        print "Message sent : ", [hex(v) for v in message]
         self.sock.send(bytearray(message))
         return [hex(ord(v)) for v in self.sock.recv(1024)]
 
@@ -67,11 +66,14 @@ class WSG50:
         return [val & 0x000000FF, (val >> 8) & 0x000000FF, (val >> 16) & 0x000000FF, (val >> 24) & 0x000000FF]
 
     def release(self):
-        return self.send_message(self.build_mesage(0x26, self.float_to_hex(45.0) + self.float_to_hex(50.0)))
+        print "Opening gripper"
+        return self.send_message(self.build_mesage(0x26, self.float_to_hex(60.0) + self.float_to_hex(100.0)))
 
     def grasp(self):
-        return self.send_message(self.build_mesage(0x25, self.float_to_hex(35.0) + self.float_to_hex(50.0)))
+        print "Closing gripper"
+        return self.send_message(self.build_mesage(0x25, self.float_to_hex(35.0) + self.float_to_hex(100.0)))
 
     def disconnect(self):
+        print "Disconnecting gripper"
         self.send_message(self.build_mesage(0x07))
         self.sock.close()
