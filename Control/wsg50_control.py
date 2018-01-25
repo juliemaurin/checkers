@@ -51,7 +51,7 @@ class WSG50:
         return crc
 
     def send_message(self, message):
-        self.sock.send(bytearray(message))
+        self.sock.sendall(bytearray(message))
         return [hex(ord(v)) for v in self.sock.recv(1024)]
 
     def build_mesage(self, cmd, data=[]):

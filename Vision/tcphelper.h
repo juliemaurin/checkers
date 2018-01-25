@@ -11,10 +11,20 @@ using namespace std;
 class TCPHelper {
 public:
     TCPHelper();
-    int openSocket(const string &hostname, const string &port);
-    void closeSocket(int  sockfd );
-    string receive (int sockfd);
-    void send (int sockfd, const string &input);
+    TCPHelper(const string &hostname, const string &port);
+
+    void openSocket(const string &hostname, const string &port);
+    void closeSocket();
+
+    string receive();
+    void send(const string &input);
+
+    void connect();
+    void disconnect();
+
+private:
+    int sockfd;
+    int client_sock;
 };
 
 #endif // TCPHELPER_H

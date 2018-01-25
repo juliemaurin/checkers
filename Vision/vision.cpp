@@ -8,117 +8,107 @@ void onMouse(int event, int x, int y, int, void* data) {
     }
 }
 
-
-
 Mat transformImage(const Mat &image, const int& size) {
-  // Create a copy that will be modified
-  Mat input = image.clone();
+    // Create a copy that will be modified
+    Mat input = image.clone();
 
-  // Input Quadilateral
-  // The 4 points that denotes the contour of the object
-  Point2f input_quad[4];
+    // Input Quadilateral
+    // The 4 points that denotes the contour of the object
+    Point2f input_quad[4];
   
-  // Output Quadilateral
-  // 4 points that define the output size
-  // Output is a square of size x size pixels
-  Point2f output_quad[4] = {Point2f(0, 0), Point2f(size - 1, 0), Point2f(size - 1, size - 1), Point2f(0, size - 1)};
+    // Output Quadilateral
+    // 4 points that define the output size
+    // Output is a square of size x size pixels
+    Point2f output_quad[4] = {Point2f(0, 0), Point2f(size - 1, 0), Point2f(size - 1, size - 1), Point2f(0, size - 1)};
   
-  // Input points vector
-  vector<Point2f> input_vect;
+    // Input points vector
+    vector<Point2f> input_vect;
   
-  
-  //open file read mode
-  ifstream fichier(fichier_ref.c_str(), ios::in);
-  //if fichier opened with success
-  if(fichier) {
+    // Open file read mode
+    ifstream fichier(fichier_ref.c_str(), ios::in);
+    //if fichier opened with success
+    if(fichier) {
+        string ligne;
+        //if the file is empty
+        if(!getline(fichier, ligne)) {
+            cerr << "File is empty" << endl;
+            // get the reference manually
+            // Create window and callback to mouse clicks
+            namedWindow("Image");
+            setMouseCallback("Image", onMouse, static_cast<void*>(&input_vect));
 
-    string ligne;
-    //if the file is empty
-    if(!getline(fichier, ligne))
-        {
-	  cerr<<"empty file!"<<endl;
-	  //get the reference manually
-	  // Create window and callback to mouse clicks
-	  namedWindow("Image");
-	  setMouseCallback("Image", onMouse, static_cast<void*>(&input_vect));
-	  
-	  // Wait until we have 4 points
-	  while(input_vect.size() < 4) {
-	    // Display image
-	    imshow("Image", input);
-	    
-	    // Display points live
-	    if (input_vect.size()) circle(input, input_vect[input_vect.size() - 1], 10, Scalar(255, 0, 0), -1, CV_AA);
-	    
-	    // 50Hz refresh
-	    waitKey(20);
-	    
-	    // The 4 points that select quadilateral on the input , from top-left in clockwise order
-	// These four pts are the sides of the rect box used as input
-	// This step is to tranform our vect to an array (ugly)
-	//	cout << "Angle coordinates : " << endl;
-	
-	
-      }
-      
-      //open the file in write mode to save the corners pos
-      ofstream fwrite(fichier_ref.c_str(), ios::out | ios::trunc);
-      
-      if(fwrite)  //if fwrite opened with success
-	{ //write the coordinates in the file 
-	  for (size_t i = 0; i < input_vect.size(); ++i) {
-	    input_quad[i] = input_vect[i];
-	    // We also display point coordinates in stdout
-	    fwrite <<  input_quad[i].x<<" "<<input_quad[i].y << endl;
-	    cout << "Point " << i + 1 << " : (" << input_quad[i].x << ", " << input_quad[i].y << ")" << endl;   
-	  }
-	  
-	  //close fwrite
-	  fwrite.close();  
-	}//end fwrite opened with success
-      
-      else  // sinon
-	cerr << "Erreur à l'ouverture en écriture !" << endl;
-    }//end if fichier empty
-    
-    
-    //File not empty
-    else{
-      //return to the file's beginning
-       fichier.seekg(0, ios::beg);
-       //       cout << endl << "On se trouve au " << fichier.tellg() << "ieme octet." << endl;
-      //read coordinates from the file
-      //      string::size_type sz;   // alias of size_t
-     string contenu;  // déclaration d'une chaîne qui contiendra la ligne lue
-     try{
-       for (size_t i = 0; i <4; ++i) {
-	 fichier>> contenu;//to get the first string
-    	 input_quad[i].x=stoi(contenu,NULL,0);
-	 cout<<"x"<<i<<"=" <<contenu;
-	 fichier>> contenu;//to get the first string
-	 input_quad[i].y=stoi(contenu,NULL,0);
-	 cout<<" ,y"<<i<<"="<< contenu<<endl;
-      }
-     }catch(std::invalid_argument& e){
-       cerr<<"No covert stoi"<<endl;
-}
-      fichier.close();  // je referme le fichier     
-    }
-  }//end if fichier opened
-  else
-    cerr << "Erreur à l'ouverture en lecture!" << endl;
-  
-  
-  
-  // Get the Perspective Transform Matrix i.e. lambda
-  Mat lambda = getPerspectiveTransform(input_quad, output_quad);
-  cout << "Transformation matrix : " << endl;
-  cout << lambda << endl;
+            // Wait until we have 4 points
+            while(input_vect.size() < 4) {
+                // Display image
+                imshow("Image", input);
 
-  // Apply the Perspective Transform just found to the src image
-  Mat output;
-  warpPerspective(image, output, lambda, Size(size, size));
-  return output;
+                // Display points live
+                if (input_vect.size()) circle(input, input_vect[input_vect.size() - 1], 10, Scalar(255, 0, 0), -1, CV_AA);
+	    
+                // 50Hz refresh
+                waitKey(0);
+	    
+                // The 4 points that select quadilateral on the input , from top-left in clockwise order
+                // These four pts are the sides of the rect box used as input
+                // This step is to tranform our vect to an array (ugly)
+                // cout << "Angle coordinates : " << endl;
+            }
+      
+            // Open the file in write mode to save the corners pos
+            ofstream fwrite(fichier_ref.c_str(), ios::out | ios::trunc);
+      
+            if(fwrite)  //if fwrite opened with success
+            { //write the coordinates in the file
+                for (size_t i = 0; i < input_vect.size(); ++i) {
+                    input_quad[i] = input_vect[i];
+                    // We also display point coordinates in stdout
+                    fwrite <<  input_quad[i].x<<" "<<input_quad[i].y << endl;
+                    cout << "Point " << i + 1 << " : (" << input_quad[i].x << ", " << input_quad[i].y << ")" << endl;
+                }
+
+                //close fwrite
+                fwrite.close();
+            }//end fwrite opened with success
+            else  // sinon
+                cerr << "Erreur à l'ouverture en écriture !" << endl;
+        }//end if fichier empty
+        //File not empty
+        else {
+            //return to the file's beginning
+            fichier.seekg(0, ios::beg);
+            //cout << endl << "On se trouve au " << fichier.tellg() << "ieme octet." << endl;
+            //read coordinates from the file
+            //      string::size_type sz;   // alias of size_t
+            string contenu;  // déclaration d'une chaîne qui contiendra la ligne lue
+            try {
+                for (size_t i = 0; i <4; ++i) {
+                    fichier >> contenu;//to get the first string
+                    input_quad[i].x = stoi(contenu, NULL, 0);
+                    cout << "x" << i << "=" << contenu;
+                    fichier >> contenu;//to get the first string
+                    input_quad[i].y = stoi(contenu, NULL, 0);
+                    cout << " ,y" << i << "=" << contenu << endl;
+                }
+            } catch(std::invalid_argument& e) {
+                cerr<<"No covert stoi"<<endl;
+            }
+
+            fichier.close();  // je referme le fichier
+        }
+    }//end if fichier opened
+    else
+        cerr << "Erreur à l'ouverture en lecture!" << endl;
+
+  
+    // Get the Perspective Transform Matrix i.e. lambda
+    Mat lambda = getPerspectiveTransform(input_quad, output_quad);
+    cout << "Transformation matrix : " << endl;
+    cout << lambda << endl;
+
+    // Apply the Perspective Transform just found to the src image
+    Mat output;
+    warpPerspective(image, output, lambda, Size(size, size));
+    return output;
 }
 
 int createReference(const string &filename, const string &refname, const int& size) {
@@ -140,12 +130,10 @@ int createReference(const string &filename, const string &refname, const int& si
   return EXIT_SUCCESS;
 }
 
-
-
 string getPieces(Mat &image, const string &refname) {
 
   // Load the image
-    //  Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
+  // Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
   // Load reference image
   Mat reference = imread(refname, CV_LOAD_IMAGE_COLOR);
   int size = reference.size().height;
@@ -168,13 +156,11 @@ string getPieces(Mat &image, const string &refname) {
   diff_w = output - reference;
   
   for(int j = 0; j <= 5; j++) {
-  plus += diff_b;
+      plus += diff_b;
   }
 
-   
   imshow("Difference", diff_b);
-  imshow("plus",plus);
-   
+  imshow("plus",plus);   
    
   //Contrast treatement
   Mat contrast_diff1,contrast_ref,contrast_black;
@@ -182,7 +168,6 @@ string getPieces(Mat &image, const string &refname) {
   int beta = 0;  //< Simple brightness control
   diff_b.convertTo(contrast_diff1, -1, alpha, beta);
   imshow("contrast apres premier difference",contrast_diff1);
-   
   
   // Morphological opening and closing to filter noise
   int morph_size = size / 20;
@@ -208,8 +193,7 @@ string getPieces(Mat &image, const string &refname) {
 
   // Split image in rectangles to detect presence of cells
   int rect_size = size / 8;
-   
-  
+
   // Initialize bitboard
   w_pieces = 0;
   b_pieces = 0;
@@ -271,48 +255,52 @@ string getPieces(Mat &image, const string &refname) {
   return pieces;
 }
 
-int imageGetPieces(const string &filename,const string &refname){
-  
-  // Load the image
-  Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);  
-  string pieces= getPieces(image, refname);
-  waitKey(0);
+int imageGetPieces(const string &filename,const string &refname) {
+    // Load the imagefichier_ref
+    Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
+    string pieces= getPieces(image, refname);
+    waitKey(0);
 }
 
-int videoGetPieces( const string &refname) {
-  Mat image;
-  VideoCapture cap(1); // open the default camera
-  if(!cap.isOpened())  // check if we succeeded
-    return -1;
+int videoGetPieces(const string &refname) {
+    Mat image;
+    VideoCapture cap(0); // open the default camera
+    if(!cap.isOpened())  // check if we succeeded
+        return -1;
   
-  string requestForPieces="1";
-  TCPHelper soc= TCPHelper();
-  int sockfd = soc.openSocket("0.0.0.0", "20000");
-  listen(sockfd,4);
-  sockaddr_in clientAddr;
-  socklen_t sin_size=sizeof(struct sockaddr_in);
-  int clientSock=accept(sockfd,(struct sockaddr*)&clientAddr, &sin_size);
-  /*    
-  const int obuf_size = 256;
-  char obuf[obuf_size];
-  */
-  
-  while(1){   
-    // if (read(sockfd, obuf, obuf_size) >= 0) {
-    //  cout << "recieved data = "<<obuf << endl;
-    cap >> image; // get a new frame from camera
-    string pieces= getPieces(image, refname);
-    if( clientSock!=0){
-      soc.send( clientSock , pieces);
-      cerr<<"The message : "<< pieces <<" was sent to the Game"<<endl;
-      cerr<<endl;
+    string requestForPieces = "1";
+    TCPHelper soc = TCPHelper("127.0.0.1", "20000");
+
+    while(1) {
+        cout << "Waiting for connection" << endl;
+        soc.connect();
+
+        while(1) {
+          string data = soc.receive();
+
+          // If we receive data
+          if(data.length() > 0) {
+              cap >> image; // get a new frame from camera
+
+              //string pieces = getPieces(image, refname);
+              string pieces = "0+0";
+
+              soc.send(pieces);
+              cerr<< "The message : "<< pieces <<" was sent to the Game"<<endl;
+
+              //show captured frame from the video
+              imshow("board", image);
+              waitKey(20);
+          } else {
+              cout << "Nothing else to read" << endl;
+              break;
+          }
+        }
+
+        soc.disconnect();
     }
-    //show captured frame from the video
-    imshow("board", image);
-    waitKey(0); 	 
-  }
-  //close(clientSock);
-  soc.closeSocket(sockfd);
+
+    soc.closeSocket();
  
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 } 
