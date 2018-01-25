@@ -8,11 +8,8 @@
 #include <string>
 #include <fstream>
 
-
-
 using namespace cv;
 using namespace std;
-
 
 static string fichier_ref = "../reference.txt"; 
 static unsigned long w_pieces;

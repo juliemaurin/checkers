@@ -5,6 +5,7 @@
 #include "agentkevin.h"
 #include "agentwalter.h"
 #include "agentplayer.h"
+#include "agentvision.h"
 
 #include "tcphelper.h"
 
@@ -20,6 +21,8 @@ void play(const std::string black_agent, const std::string white_agent) {
       black = new AgentWalter(CheckerBoard::BLACK, max_depth);
   } else if (black_agent == "player") {
       black = new AgentPlayer(CheckerBoard::BLACK);
+  } else if (black_agent == "vision") {
+      black = new AgentVision(CheckerBoard::BLACK);
   } else {
       black = new AgentKevin();
   }
@@ -27,6 +30,8 @@ void play(const std::string black_agent, const std::string white_agent) {
       white = new AgentWalter(CheckerBoard::WHITE, max_depth);
   } else if (white_agent == "player") {
       white = new AgentPlayer(CheckerBoard::WHITE);
+  } else if (white_agent == "vision") {
+      white = new AgentVision(CheckerBoard::WHITE);
   } else {
       white = new AgentKevin();
   }
@@ -68,6 +73,7 @@ void usage(std::string argv0) {
   std::cout << "Available 'agents' are : - 'kevin' : Random player" << std::endl;
   std::cout << "                         - 'walter' : NN-based AlphaBeta AI" << std::endl;
   std::cout << "                         - 'player' : Human player" << std::endl;
+  std::cout << "                         - 'vision' : Vision-based Human player" << std::endl;
   std::cout << "                         - 'arthur' : (TBI) Arthur Lee Samuel's scoring function (on top of AlphaBeta)" << std::endl;
 }
 
