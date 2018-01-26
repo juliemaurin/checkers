@@ -13,7 +13,7 @@ Word AgentKevin::make_move(const CheckerBoard &board) {
   // Kevin is dumb.
   // Don't be like Kevin.
   std::vector<Word> moves = board.get_moves();
-  std::vector<Word>::size_type n = static_cast<std::vector<Word>::size_type>(std::rand() % static_cast<int>(moves.size()));
+  size_t n = static_cast<size_t>(std::rand() % static_cast<int>(moves.size()));
 
   TCPHelper tcpH = TCPHelper();
   tcpH.openSocket("127.0.0.1", "10000");
