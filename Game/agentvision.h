@@ -13,6 +13,7 @@ public:
 
 private:
   PieceType self;
+  TCPHelper vision;
 };
 
 #endif // AGENTVISION_H
