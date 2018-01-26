@@ -28,10 +28,10 @@ Mat transformImage(const Mat &image, const int& size) {
     ifstream fichier(fichier_ref.c_str(), ios::in);
     //if fichier opened with success
     if(fichier) {
-        string ligne;
+        string line;
         //if the file is empty
-        if(!getline(fichier, ligne)) {
-            cerr << "File is empty" << endl;
+        if(!getline(fichier, line)) {
+	  //        cerr << "File is empty" << endl;
             // get the reference manually
             // Create window and callback to mouse clicks
             namedWindow("Image");
@@ -40,13 +40,13 @@ Mat transformImage(const Mat &image, const int& size) {
             // Wait until we have 4 points
             while(input_vect.size() < 4) {
                 // Display image
-                imshow("Image", input);
+	          imshow("Image", input);
 
                 // Display points live
                 if (input_vect.size()) circle(input, input_vect[input_vect.size() - 1], 10, Scalar(255, 0, 0), -1, CV_AA);
 	    
                 // 50Hz refresh
-                waitKey(0);
+                waitKey(20);
 	    
                 // The 4 points that select quadilateral on the input , from top-left in clockwise order
                 // These four pts are the sides of the rect box used as input
@@ -63,7 +63,7 @@ Mat transformImage(const Mat &image, const int& size) {
                     input_quad[i] = input_vect[i];
                     // We also display point coordinates in stdout
                     fwrite <<  input_quad[i].x<<" "<<input_quad[i].y << endl;
-                    cout << "Point " << i + 1 << " : (" << input_quad[i].x << ", " << input_quad[i].y << ")" << endl;
+		    //      cout << "Point " << i + 1 << " : (" << input_quad[i].x << ", " << input_quad[i].y << ")" << endl;
                 }
 
                 //close fwrite
@@ -84,10 +84,10 @@ Mat transformImage(const Mat &image, const int& size) {
                 for (size_t i = 0; i <4; ++i) {
                     fichier >> contenu;//to get the first string
                     input_quad[i].x = stoi(contenu, NULL, 0);
-                    cout << "x" << i << "=" << contenu;
+                    //cout << "x" << i << "=" << contenu;
                     fichier >> contenu;//to get the first string
                     input_quad[i].y = stoi(contenu, NULL, 0);
-                    cout << " ,y" << i << "=" << contenu << endl;
+		    //  cout << " ,y" << i << "=" << contenu << endl;
                 }
             } catch(std::invalid_argument& e) {
                 cerr<<"No covert stoi"<<endl;
@@ -102,8 +102,8 @@ Mat transformImage(const Mat &image, const int& size) {
   
     // Get the Perspective Transform Matrix i.e. lambda
     Mat lambda = getPerspectiveTransform(input_quad, output_quad);
-    cout << "Transformation matrix : " << endl;
-    cout << lambda << endl;
+    // cout << "Transformation matrix : " << endl;
+    //cout << lambda << endl;
 
     // Apply the Perspective Transform just found to the src image
     Mat output;
@@ -123,7 +123,7 @@ int createReference(const string &filename, const string &refname, const int& si
   Mat output = transformImage(image, size);
 
   //Display output
-  imshow("Output",output);
+  // imshow("Output",output);
   imwrite(refname, output);
 
   waitKey(0);
@@ -146,7 +146,7 @@ string getPieces(Mat &image, const string &refname) {
   //Display output
   //  destroyWindow(filename);
 
-  imshow("Output", output);
+  //imshow("Output", output);
   //imshow("Reference", reference);
   
   Mat diff_w,diff_b, white ,plus;
@@ -159,15 +159,15 @@ string getPieces(Mat &image, const string &refname) {
       plus += diff_b;
   }
 
-  imshow("Difference", diff_b);
-  imshow("plus",plus);   
+  //imshow("Difference", diff_b);
+  // imshow("plus",plus);   
    
   //Contrast treatement
   Mat contrast_diff1,contrast_ref,contrast_black;
   double alpha = 10; //< Simple contrast control
   int beta = 0;  //< Simple brightness control
   diff_b.convertTo(contrast_diff1, -1, alpha, beta);
-  imshow("contrast apres premier difference",contrast_diff1);
+  //imshow("contrast apres premier difference",contrast_diff1);
   
   // Morphological opening and closing to filter noise
   int morph_size = size / 20;
@@ -178,16 +178,16 @@ string getPieces(Mat &image, const string &refname) {
   //  cv::imshow("After opening", difference);
    
   morphologyEx(diff_w, diff_w,MORPH_CLOSE, kernel);
-  imshow("After closing", diff_w);
+  //imshow("After closing", diff_w);
   Mat diff_w_gray, diff_b_gray;
   cvtColor( diff_w, diff_w_gray, CV_BGR2GRAY );
   cvtColor( diff_b, diff_b_gray, CV_BGR2GRAY );
   //threshold( diff_w_gray, diff_w_gray,30, 255,THRESH_BINARY_INV  );
   threshold( diff_w_gray, diff_w_gray, 20,255,THRESH_BINARY);
-  imshow("After thresh",diff_w_gray);
+  //imshow("After thresh",diff_w_gray);
    
   cvtColor(diff_b_gray, diff_b_gray, COLOR_GRAY2BGR);
-  imshow("After gray",diff_b_gray);
+  //imshow("After gray",diff_b_gray);
   Mat difference;
   cvtColor(diff_w_gray, difference, CV_GRAY2BGR );
 
@@ -209,8 +209,7 @@ string getPieces(Mat &image, const string &refname) {
       
       // Computing cell index
       int index = 4*j + i;
-      unsigned long cell = 1 << index;
-      
+      uint32_t cell = 1 << index; 
       // Fetch cell
       Mat roi = difference(Rect(rect_x, rect_y, rect_size, rect_size));
       
@@ -231,27 +230,27 @@ string getPieces(Mat &image, const string &refname) {
       Scalar mean_hsv_b = mean(roi_b);
       
       // If value is above threshold, a piece is present
-      cout << index << " : (" << rect_x << ", " << rect_y << ")" << endl;
+      //  cout << index << " : (" << rect_x << ", " << rect_y << ")" << endl;
       // std::cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
       if (mean_hsv.val[2] > threshold_v) {
-        cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
-        cout << "WHITE PIECE FOUND";
+        //cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
+	// cout << "WHITE PIECE FOUND";
         w_pieces |= cell;
       } else if (mean_hsv_b.val[2] > threshold_r) {
-        cout << "    BGR b " << mean_bgr_b << " HSV b" << mean_hsv_b;
-        cout << "BLACK PIECE FOUND";
+	// cout << "    BGR b " << mean_bgr_b << " HSV b" << mean_hsv_b;
+        //cout << "BLACK PIECE FOUND";
         b_pieces |= cell;
-      } else
-	      cout << "    BGR" << mean_bgr_b << " HSV" << mean_hsv_b;
-      cout << endl;
-    }
+      } //else
+	//    cout << "    BGR" << mean_bgr_b << " HSV" << mean_hsv_b;
+	//   cout << endl;
+	}
   }
   
-  cout << "(Black) BOARD : " << bitset<32>(b_pieces) << " (" << b_pieces << ")" << endl;
-  cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
+  //cout << "(Black) BOARD : " << bitset<32>(b_pieces) << " (" << b_pieces << ")" << endl;
+  //cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
   string pieces= to_string(w_pieces)+"+"+ to_string(b_pieces);
-      cerr<<" white + Black (sent to AI) : "<<pieces<<endl;
-  
+  //  cerr<<" white + Black (sent to AI) : "<<pieces<<endl;
+    
   return pieces;
 }
 
@@ -259,8 +258,74 @@ int imageGetPieces(const string &filename,const string &refname) {
     // Load the imagefichier_ref
     Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
     string pieces= getPieces(image, refname);
+      if( pieces.compare(filename))
+	cerr << "Congratz ! Pieces detected successfully ^^ "<<endl;
+      else
+	cerr << "Sorry ..  Uncorrect result -_-"<<endl;  
     waitKey(0);
 }
+
+int stat(const string &directory,const string &refname)
+{int error=0;
+  int success=0;
+  cout << "Reading in directory " <<directory << endl;
+  //// GetFilesInDirectory
+  vector<string> filenames;
+    DIR *dir;
+    class dirent *ent;
+    class stat st;
+
+    dir = opendir(directory.c_str());
+    while ((ent = readdir(dir)) != NULL) {
+        const string file_name = ent->d_name;
+        const string full_file_name = directory + "/" + file_name;
+
+        if (file_name[0] == '.')
+            continue;
+
+        if (stat(full_file_name.c_str(), &st) == -1)
+            continue;
+
+        const bool is_directory = (st.st_mode & S_IFDIR) != 0;
+
+        if (is_directory)
+            continue;
+
+//        filenames.push_back(full_file_name); // returns full path
+        filenames.push_back(file_name); // returns just filename
+    }
+    closedir(dir);
+    int num_files=filenames.size(); // how many we found
+    
+    cout << "Number of files = " << num_files << endl;
+    cv::namedWindow( "Board", 1 );
+    for(size_t i = 0; i < filenames.size(); ++i)
+      {
+        cout << directory + filenames[i] << " #" << i << endl;
+	Mat src = imread(directory + filenames[i]);
+	
+        if(!src.data) { //Protect against no file
+	  cerr << directory + filenames[i] << ", file #" << i << ", is not an image" << endl;
+	  continue;
+        }
+	
+	string pieces= getPieces(src, refname);
+	if( pieces.compare(filenames[i])){
+	  success++; 
+	}else
+	  error++;
+        imshow("Board", src);
+
+	waitKey(50);
+	
+	
+   
+      }
+    cerr<<endl;
+    cerr << " Total number of test images : "<<num_files<<endl;
+    cerr<< " Number of successful tests : "<<success<<endl;
+    cerr<< " Number of failed tests : "<<error<<endl;
+} 
 
 int videoGetPieces(const string &refname) {
     Mat image;
@@ -290,9 +355,9 @@ int videoGetPieces(const string &refname) {
 
               //show captured frame from the video
               imshow("board", image);
-              waitKey(20);
+              waitKey(0);
           } else {
-              cout << "Nothing else to read" << endl;
+	    cout << "Nothing else to read" << endl;
               break;
           }
         }

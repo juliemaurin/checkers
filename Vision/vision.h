@@ -7,6 +7,10 @@
 #include "tcphelper.h"
 #include <string>
 #include <fstream>
+#include <dirent.h> 
+#include <sys/stat.h> 
+#include <algorithm>
+
 
 using namespace cv;
 using namespace std;
@@ -23,5 +27,6 @@ int createReference(const string &filename, const string &refname, const int& si
 int videoGetPieces(const string &refname);
 int imageGetPieces(const string &filename,const string &refname);
 string getPieces(Mat &image, const string &refname); 
+int stat(const string &foldername,const string &refname);
 
 #endif
