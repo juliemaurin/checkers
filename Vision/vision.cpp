@@ -9,105 +9,105 @@ void onMouse(int event, int x, int y, int, void* data) {
 }
 
 Mat transformImage(const Mat &image, const int& size) {
-    // Create a copy that will be modified
-    Mat input = image.clone();
-
-    // Input Quadilateral
-    // The 4 points that denotes the contour of the object
-    Point2f input_quad[4];
+  // Create a copy that will be modified
+  Mat input = image.clone();
+    
+  // Input Quadilateral
+  // The 4 points that denotes the contour of the object
+  Point2f input_quad[4];
   
-    // Output Quadilateral
-    // 4 points that define the output size
-    // Output is a square of size x size pixels
-    Point2f output_quad[4] = {Point2f(0, 0), Point2f(size - 1, 0), Point2f(size - 1, size - 1), Point2f(0, size - 1)};
+  // Output Quadilateral
+  // 4 points that define the output size
+  // Output is a square of size x size pixels
+  Point2f output_quad[4] = {Point2f(0, 0), Point2f(size - 1, 0), Point2f(size - 1, size - 1), Point2f(0, size - 1)};
   
-    // Input points vector
-    vector<Point2f> input_vect;
+  // Input points vector
+  vector<Point2f> input_vect;
   
-    // Open file read mode
-    ifstream fichier(fichier_ref.c_str(), ios::in);
-    //if fichier opened with success
-    if(fichier) {
+  // Open file read mode
+  ifstream fichier(fichier_ref.c_str(), ios::in);
+  //if fichier opened with success
+  if(fichier) {
         string line;
         //if the file is empty
         if(!getline(fichier, line)) {
 	  //        cerr << "File is empty" << endl;
-            // get the reference manually
+	  // get the reference manually
             // Create window and callback to mouse clicks
-            namedWindow("Image");
-            setMouseCallback("Image", onMouse, static_cast<void*>(&input_vect));
+	  namedWindow("Image");
+	  setMouseCallback("Image", onMouse, static_cast<void*>(&input_vect));
 
-            // Wait until we have 4 points
-            while(input_vect.size() < 4) {
-                // Display image
-	          imshow("Image", input);
-
-                // Display points live
-                if (input_vect.size()) circle(input, input_vect[input_vect.size() - 1], 10, Scalar(255, 0, 0), -1, CV_AA);
-	    
-                // 50Hz refresh
-                waitKey(20);
-	    
+	  // Wait until we have 4 points
+	  while(input_vect.size() < 4) {
+	    // Display image
+	      imshow("Image", input);
+	      
+	      // Display points live
+	      if (input_vect.size()) circle(input, input_vect[input_vect.size() - 1], 10, Scalar(255, 0, 0), -1, CV_AA);
+	      
+	      // 50Hz refresh
+	      waitKey(20);
+		
                 // The 4 points that select quadilateral on the input , from top-left in clockwise order
                 // These four pts are the sides of the rect box used as input
                 // This step is to tranform our vect to an array (ugly)
                 // cout << "Angle coordinates : " << endl;
-            }
-      
+	  }
+	  
             // Open the file in write mode to save the corners pos
-            ofstream fwrite(fichier_ref.c_str(), ios::out | ios::trunc);
-      
-            if(fwrite)  //if fwrite opened with success
+	  ofstream fwrite(fichier_ref.c_str(), ios::out | ios::trunc);
+	  
+	  if(fwrite)  //if fwrite opened with success
             { //write the coordinates in the file
-                for (size_t i = 0; i < input_vect.size(); ++i) {
-                    input_quad[i] = input_vect[i];
-                    // We also display point coordinates in stdout
-                    fwrite <<  input_quad[i].x<<" "<<input_quad[i].y << endl;
-		    //      cout << "Point " << i + 1 << " : (" << input_quad[i].x << ", " << input_quad[i].y << ")" << endl;
-                }
-
-                //close fwrite
-                fwrite.close();
+	      for (size_t i = 0; i < input_vect.size(); ++i) {
+		input_quad[i] = input_vect[i];
+		// We also display point coordinates in stdout
+		fwrite <<  input_quad[i].x<<" "<<input_quad[i].y << endl;
+		//		cout << "Point " << i + 1 << " : (" << input_quad[i].x << ", " << input_quad[i].y << ")" << endl;
+	      }
+	      
+	      //close fwrite
+	      fwrite.close();
             }//end fwrite opened with success
-            else  // sinon
-                cerr << "Erreur à l'ouverture en écriture !" << endl;
+	  else  // sinon
+	    cerr << "Erreur à l'ouverture en écriture !" << endl;
         }//end if fichier empty
         //File not empty
         else {
-            //return to the file's beginning
-            fichier.seekg(0, ios::beg);
-            //cout << endl << "On se trouve au " << fichier.tellg() << "ieme octet." << endl;
-            //read coordinates from the file
+	  //return to the file's beginning
+	  fichier.seekg(0, ios::beg);
+	  //cout << endl << "On se trouve au " << fichier.tellg() << "ieme octet." << endl;
+	  //read coordinates from the file
             //      string::size_type sz;   // alias of size_t
-            string contenu;  // déclaration d'une chaîne qui contiendra la ligne lue
-            try {
-                for (size_t i = 0; i <4; ++i) {
-                    fichier >> contenu;//to get the first string
-                    input_quad[i].x = stoi(contenu, NULL, 0);
-                    //cout << "x" << i << "=" << contenu;
-                    fichier >> contenu;//to get the first string
-                    input_quad[i].y = stoi(contenu, NULL, 0);
+	  string contenu;  // déclaration d'une chaîne qui contiendra la ligne lue
+	  try {
+	    for (size_t i = 0; i <4; ++i) {
+	      fichier >> contenu;//to get the first string
+	      input_quad[i].x = stoi(contenu, NULL, 0);
+	      //cout << "x" << i << "=" << contenu;
+	      fichier >> contenu;//to get the first string
+	      input_quad[i].y = stoi(contenu, NULL, 0);
 		    //  cout << " ,y" << i << "=" << contenu << endl;
-                }
-            } catch(std::invalid_argument& e) {
-                cerr<<"No covert stoi"<<endl;
-            }
-
-            fichier.close();  // je referme le fichier
+	    }
+	  } catch(std::invalid_argument& e) {
+	    cerr<<"No covert stoi"<<endl;
+	  }
+	  
+	  fichier.close();  // je referme le fichier
         }
-    }//end if fichier opened
-    else
-        cerr << "Erreur à l'ouverture en lecture!" << endl;
-
+  }//end if fichier opened
+  else
+    cerr << "Erreur à l'ouverture en lecture!" << endl;
   
-    // Get the Perspective Transform Matrix i.e. lambda
-    Mat lambda = getPerspectiveTransform(input_quad, output_quad);
-    // cout << "Transformation matrix : " << endl;
-    //cout << lambda << endl;
-
-    // Apply the Perspective Transform just found to the src image
-    Mat output;
-    warpPerspective(image, output, lambda, Size(size, size));
+ 
+  // Get the Perspective Transform Matrix i.e. lambda
+  Mat lambda = getPerspectiveTransform(input_quad, output_quad);
+  // cout << "Transformation matrix : " << endl;
+  // cout << lambda << endl;
+  
+  // Apply the Perspective Transform just found to the src image
+  Mat output;
+  warpPerspective(image, output, lambda, Size(size, size));
     return output;
 }
 
@@ -123,7 +123,7 @@ int createReference(const string &filename, const string &refname, const int& si
   Mat output = transformImage(image, size);
 
   //Display output
-  // imshow("Output",output);
+  imshow("Output",output);
   imwrite(refname, output);
 
   waitKey(0);
