@@ -7,8 +7,8 @@
 #include <utility>
 #include <vector>
 
-typedef unsigned long Word;
-typedef unsigned char PieceType;
+typedef uint32_t Word;
+typedef uint8_t PieceType;
 
 class CheckerBoard {
 public:

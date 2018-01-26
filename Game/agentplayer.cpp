@@ -10,7 +10,7 @@ AgentPlayer::~AgentPlayer() {
 
 Word AgentPlayer::make_move(const CheckerBoard &board) {
   std::vector<Word> moves = board.get_moves();
-  std::vector<Word>::size_type choice = moves.size() + 1;
+  size_t choice = moves.size() + 1;
 
   int index = 0;
   for (const Word& move : moves) std::cout << "Move " << index++ << ": " << board.to_string(move) << std::endl;

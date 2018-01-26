@@ -195,8 +195,8 @@ string getPieces(Mat &image, const string &refname) {
   int rect_size = size / 8;
 
   // Initialize bitboard
-  w_pieces = 0;
-  b_pieces = 0;
+  uint32_t w_pieces = 0;
+  uint32_t b_pieces = 0;
   
   // Loop by line
   for(int j = 7; j >= 0; --j) {
@@ -260,6 +260,7 @@ int imageGetPieces(const string &filename,const string &refname) {
     Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
     string pieces= getPieces(image, refname);
     waitKey(0);
+    return EXIT_SUCCESS;
 }
 
 int videoGetPieces(const string &refname) {
@@ -276,6 +277,7 @@ int videoGetPieces(const string &refname) {
         soc.connect();
 
         while(1) {
+          std::cout << "Waiting for incoming data" << std::endl;
           string data = soc.receive();
 
           // If we receive data
@@ -283,10 +285,11 @@ int videoGetPieces(const string &refname) {
               cap >> image; // get a new frame from camera
 
               //string pieces = getPieces(image, refname);
-              string pieces = "0+0";
+              string pieces = "305419896+4294967295"; // For testing purposes
 
+              std::cout << "Sending pieces data" << std::endl;
               soc.send(pieces);
-              cerr<< "The message : "<< pieces <<" was sent to the Game"<<endl;
+              cout << "The message : "<< pieces <<" was sent to the Game"<<endl;
 
               //show captured frame from the video
               imshow("board", image);
@@ -297,6 +300,7 @@ int videoGetPieces(const string &refname) {
           }
         }
 
+        std::cout << "Disconnecting client" << std::endl;
         soc.disconnect();
     }
 

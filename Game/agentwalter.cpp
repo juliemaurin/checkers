@@ -13,8 +13,8 @@ AgentWalter::~AgentWalter() {
 // TODO : Walter (Walter Pitts) will be our main AI
 Word AgentWalter::make_move(const CheckerBoard &board) {
   std::vector<Word> moves = board.get_moves();
-  std::vector<Word>::size_type best_move = 0;
-  std::vector<Word>::size_type index = 0;
+  size_t best_move = 0;
+  size_t index = 0;
 
   int value = std::numeric_limits<int>::min();
   int depth = max_depth;

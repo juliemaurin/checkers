@@ -12,8 +12,6 @@ using namespace cv;
 using namespace std;
 
 static string fichier_ref = "../reference.txt"; 
-static unsigned long w_pieces;
-static unsigned long b_pieces;
 
 // onMouse event callback function
 void onMouse(int event, int x, int y, int flags, void* data);

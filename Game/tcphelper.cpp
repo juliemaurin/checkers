@@ -16,7 +16,7 @@ string TCPHelper::receive(){
         throw runtime_error("TCPHelper : Failed to read from socket");
     }
 
-    cout << obuf << endl;
+    return std::string(obuf);
 }
 
 void TCPHelper::openSocket(const string &hostname, const string &port){
