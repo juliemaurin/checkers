@@ -266,66 +266,63 @@ int imageGetPieces(const string &filename,const string &refname) {
     return EXIT_SUCCESS;
 }
 
-int stat(const string &directory,const string &refname)
-{int error=0;
+int stat(const string &directory,const string &refname){
+  string result;
+  int error=0;
   int success=0;
   cout << "Reading in directory " <<directory << endl;
-  //// GetFilesInDirectory
+  // GetFilesInDirectory
   vector<string> filenames;
-    DIR *dir;
-    class dirent *ent;
-    class stat st;
-
-    dir = opendir(directory.c_str());
-    while ((ent = readdir(dir)) != NULL) {
-        const string file_name = ent->d_name;
-        const string full_file_name = directory + "/" + file_name;
-
-        if (file_name[0] == '.')
-            continue;
-
-        if (stat(full_file_name.c_str(), &st) == -1)
-            continue;
-
-        const bool is_directory = (st.st_mode & S_IFDIR) != 0;
-
-        if (is_directory)
-            continue;
-
-//        filenames.push_back(full_file_name); // returns full path
-        filenames.push_back(file_name); // returns just filename
-    }
-    closedir(dir);
-    int num_files=filenames.size(); // how many we found
+  DIR *dir;
+  class dirent *ent;
+  class stat st;
+  
+  dir = opendir(directory.c_str());
+  while ((ent = readdir(dir)) != NULL) {
+    const string file_name = ent->d_name;
+    const string full_file_name = directory + "/" + file_name;
     
-    cout << "Number of files = " << num_files << endl;
-    cv::namedWindow( "Board", 1 );
-    for(size_t i = 0; i < filenames.size(); ++i)
-      {
-        cout << directory + filenames[i] << " #" << i << endl;
-	Mat src = imread(directory + filenames[i]);
-	
-        if(!src.data) { //Protect against no file
-	  cerr << directory + filenames[i] << ", file #" << i << ", is not an image" << endl;
-	  continue;
-        }
-	
-	string pieces= getPieces(src, refname);
-	if( pieces.compare(filenames[i])){
-	  success++; 
-	}else
-	  error++;
-        imshow("Board", src);
+    if (file_name[0] == '.')
+      continue;
 
-	waitKey(50);
-	
-	
-   
-      }
-    cerr<<endl;
-    cerr << " Total number of test images : "<<num_files<<endl;
-    cerr<< " Number of successful tests : "<<success<<endl;
-    cerr<< " Number of failed tests : "<<error<<endl;
+    if (stat(full_file_name.c_str(), &st) == -1)
+      continue;
+    
+    const bool is_directory = (st.st_mode & S_IFDIR) != 0;
+    
+    if (is_directory)
+      continue;
+    
+    // filenames.push_back(full_file_name); // returns full path
+    filenames.push_back(file_name); // returns just filename
+  }
+  closedir(dir);
+  int num_files=filenames.size(); // how many we found
+  //cout << "Number of files = " << num_files << endl;
+  cv::namedWindow( "Board", 1 );
+  for(size_t i = 0; i < filenames.size(); ++i){
+    Mat src = imread(directory + filenames[i]);
+    if(!src.data) { //Protect against no file
+      cerr << directory + filenames[i] << ", file #" << i << ", is not an image" << endl;
+      continue;
+    }
+    string pieces= getPieces(src, refname);
+    if( pieces.compare(filenames[i])){
+      result=" Success";
+      success++; 
+    }
+    else{
+      result=" Error";
+      error++;
+    }
+    cout << directory + filenames[i] << " : " << result << endl;
+    imshow("Board", src);
+    waitKey(50);
+  }
+  cerr<<endl;
+  cerr << "Total number of test images   : "<<num_files<<endl;
+  cerr<< "   Number of successful tests : "<<success<<endl;
+  cerr<< "   Number of failed tests     : "<<error<<endl;
 } 
 
 int videoGetPieces(const string &refname) {
