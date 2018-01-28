@@ -1,5 +1,7 @@
 #include "vision.h"
 
+static Mat mask;
+static int first_parse=1;
 // onMouse event callback function
 void onMouse(int event, int x, int y, int, void* data) {
   if(event == CV_EVENT_LBUTTONDOWN) {
@@ -9,6 +11,7 @@ void onMouse(int event, int x, int y, int, void* data) {
 }
 
 Mat transformImage(const Mat &image, const int& size) {
+  // Mat black(image.rows, image.cols, CV_8UC3, Scalar(0, 0, 0));
   // Create a copy that will be modified
   Mat input = image.clone();
     
@@ -78,7 +81,7 @@ Mat transformImage(const Mat &image, const int& size) {
 	  fichier.seekg(0, ios::beg);
 	  //cout << endl << "On se trouve au " << fichier.tellg() << "ieme octet." << endl;
 	  //read coordinates from the file
-            //      string::size_type sz;   // alias of size_t
+	  //      string::size_type sz;   // alias of size_t
 	  string contenu;  // déclaration d'une chaîne qui contiendra la ligne lue
 	  try {
 	    for (size_t i = 0; i <4; ++i) {
@@ -87,19 +90,56 @@ Mat transformImage(const Mat &image, const int& size) {
 	      //cout << "x" << i << "=" << contenu;
 	      fichier >> contenu;//to get the first string
 	      input_quad[i].y = stoi(contenu, NULL, 0);
-		    //  cout << " ,y" << i << "=" << contenu << endl;
+	      //  cout << " ,y" << i << "=" << contenu << endl;
 	    }
 	  } catch(std::invalid_argument& e) {
-	    cerr<<"No covert stoi"<<endl;
+	  cerr<<"No covert stoi"<<endl;
 	  }
 	  
 	  fichier.close();  // je referme le fichier
-        }
+	}
   }//end if fichier opened
   else
     cerr << "Erreur à l'ouverture en lecture!" << endl;
   
- 
+  Point pts[4];
+  //    mask=Mat::zeros(image.rows, image.cols, CV_8UC3);
+  mask=image.clone();
+  for (size_t i = 0; i <4 ; ++i)
+    pts[i]=input_quad[i];
+  
+  //Security mask : Top-Right ______begin
+  pts[1].y=0; pts[1].x=input_quad[1].x-30;
+  pts[2].y=0;
+  //Right
+  pts[2].x=image.cols;
+  pts[3].x=image.cols; pts[3].y=input_quad[3].y+30;
+  //Make the mask larger
+  pts[0].x=max(0,(int)(input_quad[0].x-30));
+  pts[0].y=min(image.rows,(int)(input_quad[0].y+30));
+  //Security mask : Top-Right ______end
+  
+
+  
+  //Security mask : Top-Left  ______begin
+  /*
+    pts[1].y=0; 
+    pts[2].y=0; pts[2].x=input_quad[2].x+30;
+    //Left
+    pts[1].x=0;  pts[0].x=0; 
+  */
+  //Security mask : Top-Left  ______end
+  
+  //create security mask
+  fillConvexPoly(mask, pts,4,Scalar(255,255,255) );
+  
+  /*!! The security area should be clear in the first image !!*/
+  if (first_parse){
+    //Create security reference for the first image parse
+    imwrite ("security_boundary.jpg",mask);
+    first_parse=0;
+  }
+  
   // Get the Perspective Transform Matrix i.e. lambda
   Mat lambda = getPerspectiveTransform(input_quad, output_quad);
   // cout << "Transformation matrix : " << endl;
@@ -108,7 +148,7 @@ Mat transformImage(const Mat &image, const int& size) {
   // Apply the Perspective Transform just found to the src image
   Mat output;
   warpPerspective(image, output, lambda, Size(size, size));
-    return output;
+  return output;
 }
 
 int createReference(const string &filename, const string &refname, const int& size) {
@@ -254,6 +294,32 @@ string getPieces(Mat &image, const string &refname) {
   return pieces;
 }
 
+int security(Mat src){
+  int security_coef, warning=0;
+  Scalar m;
+  Mat diff;
+  Mat security_ref=imread("security_boundary.jpg");
+  cvtColor(security_ref,security_ref,CV_BGR2GRAY);
+  cvtColor(mask,mask,CV_BGR2GRAY);
+  imshow("Board", src);
+  waitKey(50);
+  diff=abs(mask-security_ref);
+ 
+  //security_coef=1; //log9
+  security_coef=7; //log7
+  
+  m= mean (diff);
+  if(m[0]>security_coef){
+    warning=1;
+    imshow ("Board",diff);
+    waitKey(0);
+    cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
+    cerr<<"An object is crossing the security Area "<<m[0]<<endl;
+    cerr<<endl;
+  }
+  return warning;
+}
+
 int imageGetPieces(const string &filename,const string &refname) {
     // Load the imagefichier_ref
     Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
@@ -270,6 +336,7 @@ int stat(const string &directory,const string &refname){
   string result;
   int error=0;
   int success=0;
+  
   cout << "Reading in directory " <<directory << endl;
   // GetFilesInDirectory
   vector<string> filenames;
@@ -284,7 +351,7 @@ int stat(const string &directory,const string &refname){
     
     if (file_name[0] == '.')
       continue;
-
+    
     if (stat(full_file_name.c_str(), &st) == -1)
       continue;
     
@@ -316,14 +383,15 @@ int stat(const string &directory,const string &refname){
       error++;
     }
     cout << directory + filenames[i] << " : " << result << endl;
-    imshow("Board", src);
-    waitKey(50);
+    //control security borders
+    int warning=security(src); // 1:an object was detected; 0 : clear 
   }
   cerr<<endl;
   cerr << "Total number of test images   : "<<num_files<<endl;
   cerr<< "   Number of successful tests : "<<success<<endl;
   cerr<< "   Number of failed tests     : "<<error<<endl;
 } 
+
 
 int videoGetPieces(const string &refname) {
     Mat image;
