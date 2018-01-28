@@ -225,8 +225,11 @@ string getPieces(Mat &image, const string &refname) {
   //threshold( diff_w_gray, diff_w_gray,30, 255,THRESH_BINARY_INV  );
   threshold( diff_w_gray, diff_w_gray, 20,255,THRESH_BINARY);
   //imshow("After thresh",diff_w_gray);
-   
-  cvtColor(diff_b_gray, diff_b_gray, COLOR_GRAY2BGR);
+
+  // threshold( diff_b_gray, diff_b_gray, 15,255,THRESH_BINARY);
+  // imshow("After thresh",diff_b_gray);
+  //waitKey(0);
+ cvtColor(diff_b_gray, diff_b_gray, COLOR_GRAY2BGR);
   //imshow("After gray",diff_b_gray);
   Mat difference;
   cvtColor(diff_w_gray, difference, CV_GRAY2BGR );
@@ -294,6 +297,8 @@ string getPieces(Mat &image, const string &refname) {
   return pieces;
 }
 
+
+//Compare an image to the security mask
 int security(Mat src){
   int security_coef, warning=0;
   Scalar m;
@@ -333,7 +338,7 @@ int imageGetPieces(const string &filename,const string &refname) {
 }
 
 int stat(const string &directory,const string &refname){
-  string result;
+  string result="None";
   int error=0;
   int success=0;
   
@@ -374,7 +379,9 @@ int stat(const string &directory,const string &refname){
       continue;
     }
     string pieces= getPieces(src, refname);
-    if( pieces.compare(filenames[i])){
+    string p_name=filenames[i];
+      if (p_name.size () > 0)  p_name.resize (p_name.size () - 4);
+    if(pieces.compare(p_name)==0){      
       result=" Success";
       success++; 
     }
@@ -382,7 +389,10 @@ int stat(const string &directory,const string &refname){
       result=" Error";
       error++;
     }
-    cout << directory + filenames[i] << " : " << result << endl;
+    cerr<<"Pieces="<<pieces<<endl;
+    cerr<<"Name  ="<<p_name<<endl;
+    cerr<<"Result = " << result << endl;
+    cerr<<endl;
     //control security borders
     int warning=security(src); // 1:an object was detected; 0 : clear 
   }
