@@ -273,26 +273,26 @@ string getPieces(Mat &image, const string &refname) {
       Scalar mean_hsv_b = mean(roi_b);
       
       // If value is above threshold, a piece is present
-      //  cout << index << " : (" << rect_x << ", " << rect_y << ")" << endl;
+        cout << index << " : (" << rect_x << ", " << rect_y << ")" << endl;
       // std::cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
       if (mean_hsv.val[2] > threshold_v) {
-        //cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
-	// cout << "WHITE PIECE FOUND";
+        cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
+	 cout << "WHITE PIECE FOUND";
         w_pieces |= cell;
       } else if (mean_hsv_b.val[2] > threshold_r) {
-	// cout << "    BGR b " << mean_bgr_b << " HSV b" << mean_hsv_b;
-        //cout << "BLACK PIECE FOUND";
+	 cout << "    BGR b " << mean_bgr_b << " HSV b" << mean_hsv_b;
+        cout << "BLACK PIECE FOUND";
         b_pieces |= cell;
-      } //else
-	//    cout << "    BGR" << mean_bgr_b << " HSV" << mean_hsv_b;
-	//   cout << endl;
+      } else
+	    cout << "    BGR" << mean_bgr_b << " HSV" << mean_hsv_b;
+	   cout << endl;
 	}
   }
   
   //cout << "(Black) BOARD : " << bitset<32>(b_pieces) << " (" << b_pieces << ")" << endl;
   //cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
   string pieces= to_string(w_pieces)+"+"+ to_string(b_pieces);
-  //  cerr<<" white + Black (sent to AI) : "<<pieces<<endl;
+    cerr<<" white + Black (sent to AI) : "<<pieces<<endl;
     
   return pieces;
 }
@@ -329,10 +329,6 @@ int imageGetPieces(const string &filename,const string &refname) {
     // Load the imagefichier_ref
     Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
     string pieces= getPieces(image, refname);
-      if( pieces.compare(filename))
-	cerr << "Congratz ! Pieces detected successfully ^^ "<<endl;
-      else
-	cerr << "Sorry ..  Uncorrect result -_-"<<endl;  
     waitKey(0);
     return EXIT_SUCCESS;
 }
