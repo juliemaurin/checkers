@@ -8,7 +8,7 @@ from time import sleep
 class Robot:
     def __init__(self):
         self.a = 2 # Tool acceleration (m/s²)
-        self.v = 1.5 #(max=3) # Tool speed (m/s)
+        self.v = 0.1 #(max=3) # Tool speed (m/s)
         self.payload_weight = 1.2
 
         self.lift_distance = 0.03
@@ -35,14 +35,22 @@ class Robot:
 
         self.delta = [(b - a) / 7.0 for a, b in zip(start1, start2)]
 
+        # Cancel angle linearization
+        self.delta[3] = 0.0
+        self.delta[4] = 0.0
+        self.delta[5] = 0.0
+
         self.start = start1
+
+        print start1
+        print start2
 
         print self.delta
         print self.start
 
     def get_poses(self, offset):
         low = [start + offset for start, offset in zip(self.start, offset)]
-        high = low
+        high = list(low)
         high[2] += self.lift_distance
         return low, high
 
@@ -50,7 +58,7 @@ class Robot:
         i = 2 * (n % 4)
         j = n // 4
 
-        if (j % 2):
+        if (j % 2 == 0):
             i += 1
 
         dx = i * self.delta[0]
@@ -58,9 +66,9 @@ class Robot:
 
         height_low = self.delta[2] * (i + j) / 2.0
 
-        rx = self.delta[2] * (i + j) / 2.0
-        rz = self.delta[3] * (i + j) / 2.0
-        ry = self.delta[4] * (i + j) / 2.0
+        rx = self.delta[3] * (i + j) / 2.0
+        rz = self.delta[4] * (i + j) / 2.0
+        ry = self.delta[5] * (i + j) / 2.0
 
         return dx, dy, height_low, rx, ry, rz
 
@@ -91,9 +99,10 @@ class Robot:
         # Get "from" positions
         pos_from_offset = self.get_pos(n)
         pos_from_low, pos_from_high = self.get_poses(pos_from_offset)
+        print pos_from_low, pos_from_high
 
         # Get "to" positions
-        pos_to_offset = (-2 * self.delta[0], -1 * self.delta[1], 0.0, 0.0, 0.0, 0.0)
+        pos_to_offset = (-2 * self.delta[0], -1 * self.delta[1], self.delta[2], 0.0, 0.0, 0.0)
         pos_to_low, pos_to_high = self.get_poses(pos_to_offset)
 
         print "Removing ", n
@@ -138,6 +147,7 @@ if __name__ == "__main__":
         wsg.connect()
 
         for i in range(32):
+            ur.move_piece(i, 5, wsg)
             ur.remove_piece(i, wsg)
     except KeyboardInterrupt:
         print "MANUALY INTERRUPTED"
