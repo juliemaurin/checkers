@@ -157,7 +157,7 @@ int createReference(const string &filename, const string &refname, const int& si
   ofstream f(fichier_ref, ios::out|ios::trunc);//empty the file anf create it if it doesn't exist
   f.close(); //close the file
   //Resize image
-  resize(image, image, Size(600,600), 0, 0, CV_INTER_LINEAR);
+  resize(image, image, Size(size,size), 0, 0, CV_INTER_LINEAR);
   
   // Output image
   Mat output = transformImage(image, size);
@@ -186,8 +186,8 @@ string getPieces(Mat &image, const string &refname) {
   //Display output
   //  destroyWindow(filename);
 
-  //imshow("Output", output);
-  //imshow("Reference", reference);
+  imshow("Output", output);
+  imshow("Reference", reference);
   
   Mat diff_w,diff_b, white ,plus;
   plus = output.clone();
@@ -240,7 +240,7 @@ string getPieces(Mat &image, const string &refname) {
   // Initialize bitboard
   uint32_t w_pieces = 0;
   uint32_t b_pieces = 0;
-  
+  int doubt_count =0;
   // Loop by line
   for(int j = 7; j >= 0; --j) {
     // Computing Y coordinate
@@ -271,20 +271,32 @@ string getPieces(Mat &image, const string &refname) {
       Scalar mean_bgr_b = mean(roi_b);
       cvtColor(roi_b, roi_b, COLOR_BGR2HSV);
       Scalar mean_hsv_b = mean(roi_b);
-      
+      string doubt;
       // If value is above threshold, a piece is present
         cout << index << " : (" << rect_x << ", " << rect_y << ")" << endl;
       // std::cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
       if (mean_hsv.val[2] > threshold_v) {
-        cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
-	 cout << "WHITE PIECE FOUND";
+	doubt="";
+	if (abs(mean_hsv.val[2]- threshold_v)<5)
+	  { doubt="With doupt";
+	    doubt_count++;
+	  }
+	cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
+	cout << "WHITE PIECE FOUND  "<< doubt;
         w_pieces |= cell;
-      } else if (mean_hsv_b.val[2] > threshold_r) {
-	 cout << "    BGR b " << mean_bgr_b << " HSV b" << mean_hsv_b;
-        cout << "BLACK PIECE FOUND";
-        b_pieces |= cell;
-      } else
-	    cout << "    BGR" << mean_bgr_b << " HSV" << mean_hsv_b;
+      }
+      else
+	if (mean_hsv_b.val[2] > threshold_r) {
+	  doubt="";
+	  if (abs(mean_hsv_b.val[2]- threshold_r)<5)
+	    { doubt="With doupt";
+	      doubt_count++;
+	    }
+	  cout << "    BGR b " << mean_bgr_b << " HSV b" << mean_hsv_b;
+	  cout << "BLACK PIECE FOUND  " << doubt;
+	  b_pieces |= cell;
+	} else
+	  cout << "    BGR" << mean_bgr_b << " HSV" << mean_hsv_b;
 	   cout << endl;
 	}
   }
@@ -292,7 +304,7 @@ string getPieces(Mat &image, const string &refname) {
   //cout << "(Black) BOARD : " << bitset<32>(b_pieces) << " (" << b_pieces << ")" << endl;
   //cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
   string pieces= to_string(w_pieces)+"+"+ to_string(b_pieces);
-    cerr<<" white + Black (sent to AI) : "<<pieces<<endl;
+  cerr<<" white + Black (sent to AI) : "<<pieces<<" With "<<doubt_count<<" doubts"<<endl;
     
   return pieces;
 }
@@ -329,7 +341,7 @@ int imageGetPieces(const string &filename,const string &refname) {
     // Load the imagefichier_ref
     Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
     string pieces= getPieces(image, refname);
-    waitKey(0);
+    waitKey(1);
     return EXIT_SUCCESS;
 }
 
@@ -420,8 +432,8 @@ int videoGetPieces(const string &refname) {
           if(data.length() > 0) {
               cap >> image; // get a new frame from camera
 
-              //string pieces = getPieces(image, refname);
-              string pieces = "305419896+4294967295"; // For testing purposes
+              string pieces = getPieces(image, refname);
+              //string pieces = "305419896+4294967295"; // For testing purposes
 
               std::cout << "Sending pieces data" << std::endl;
               soc.send(pieces);
