@@ -303,6 +303,8 @@ string getPieces(Mat &image, const string &refname) {
   
   //cout << "(Black) BOARD : " << bitset<32>(b_pieces) << " (" << b_pieces << ")" << endl;
   //cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
+  cout << "(Black) BOARD : " << bitset<32>(b_pieces) << " (" << b_pieces << ")" << endl;
+  cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
   string pieces= to_string(w_pieces)+"+"+ to_string(b_pieces);
   cerr<<" white + Black (sent to AI) : "<<pieces<<" With "<<doubt_count<<" doubts"<<endl;
     
@@ -414,6 +416,7 @@ int stat(const string &directory,const string &refname){
 int videoGetPieces(const string &refname) {
     Mat image;
     VideoCapture cap(0); // open the default camera
+    VideoCapture cap(1); // open the default camera
     if(!cap.isOpened())  // check if we succeeded
         return -1;
   
