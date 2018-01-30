@@ -13,6 +13,12 @@ AgentVision::~AgentVision() {
 }
 
 Word AgentVision::make_move(const CheckerBoard &board) {
+  std::cout << "Wait what ?" << std::endl;
+  return 0;
+}
+
+
+void AgentVision::replace_board(CheckerBoard &board) {
   std::vector<Word> moves = board.get_moves();
 
   int index = 0;
@@ -47,16 +53,7 @@ Word AgentVision::make_move(const CheckerBoard &board) {
 
   std::cout << s << " -> " << black << " " << white << std::endl;
 
-
-  // well well well
-  // W E L L
-  // W E L L
-  // W E L L
-  // U NOW WHA TIME IT ISSSssssS BoIIIIIIIIIIISSSS
-
-  // Check
-  if (false) std::cout << "Do you kno da way" << std::endl;
-
-  // Return move made
-  return moves.at(0);
+  // TODO : Guess move made from picture
+  // ON REMPLACE LE BOARD ICI
+  board.new_game(black, white, self);
 }

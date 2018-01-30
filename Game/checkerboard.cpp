@@ -91,6 +91,32 @@ void CheckerBoard::new_game() {
   gen_moves();
 }
 
+void CheckerBoard::new_game(Word black, Word white, PieceType player) {
+  if (player == CheckerBoard::WHITE) {
+      active = CheckerBoard::BLACK;
+      passive = CheckerBoard::WHITE;
+  } else {
+      active = CheckerBoard::WHITE;
+      passive = CheckerBoard::BLACK;
+  }
+
+  // Setup black pieces
+  forward[BLACK]  = black;
+  backward[BLACK] = 0x00000000;
+  pieces[BLACK] = forward[BLACK] | backward[BLACK];
+
+  // Setup white pieces
+  forward[WHITE]  = 0x00000000;
+  backward[WHITE] = white;
+  pieces[WHITE] = forward[WHITE] | backward[WHITE];
+
+  // Setup "empty" spaces
+  empty = MASK_ALL ^ (pieces[BLACK] | pieces[WHITE]);
+
+  jumping = false;
+  gen_moves();
+}
+
 // Apply a move to the board
 void CheckerBoard::make_move(Word move) {
   // Get low move index
