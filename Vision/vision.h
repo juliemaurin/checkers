@@ -21,10 +21,11 @@ static string fichier_ref = "../reference.txt";
 void onMouse(int event, int x, int y, int flags, void* data);
 
 Mat transformImage(const Mat &image, const int& size);
-int createReference(const string &filename, const string &refname, const int& size);
-int videoGetPieces(const string &refname);
-int imageGetPieces(const string &filename,const string &refname);
-string getPieces(Mat &image, const string &refname); 
-int stat(const string &foldername,const string &refname);
+int createReference(const string &emptyref, const string &fullref, const int& size);
+int videoGetPieces();
+int imageGetPieces(const string &filename);
+string getPieces(Mat &image); 
+int stat(const string &foldername);
+int security(Mat src);
 
 #endif

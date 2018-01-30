@@ -1,7 +1,7 @@
 #include "vision.h"
 
 static Mat mask;
-static int first_parse=1;
+
 // onMouse event callback function
 void onMouse(int event, int x, int y, int, void* data) {
   if(event == CV_EVENT_LBUTTONDOWN) {
@@ -11,10 +11,10 @@ void onMouse(int event, int x, int y, int, void* data) {
 }
 
 Mat transformImage(const Mat &image, const int& size) {
-  // Mat black(image.rows, image.cols, CV_8UC3, Scalar(0, 0, 0));
+
   // Create a copy that will be modified
   Mat input = image.clone();
-    
+  
   // Input Quadilateral
   // The 4 points that denotes the contour of the object
   Point2f input_quad[4];
@@ -26,95 +26,92 @@ Mat transformImage(const Mat &image, const int& size) {
   
   // Input points vector
   vector<Point2f> input_vect;
+
   
   // Open file read mode
   ifstream fichier(fichier_ref.c_str(), ios::in);
-  //if fichier opened with success
+  //if file opened with success
   if(fichier) {
-        string line;
-        //if the file is empty
-        if(!getline(fichier, line)) {
-	  //        cerr << "File is empty" << endl;
-	  // get the reference manually
-            // Create window and callback to mouse clicks
-	  namedWindow("Image");
-	  setMouseCallback("Image", onMouse, static_cast<void*>(&input_vect));
-
-	  // Wait until we have 4 points
-	  while(input_vect.size() < 4) {
-	    // Display image
-	      imshow("Image", input);
-	      
-	      // Display points live
-	      if (input_vect.size()) circle(input, input_vect[input_vect.size() - 1], 10, Scalar(255, 0, 0), -1, CV_AA);
-	      
-	      // 50Hz refresh
-	      waitKey(20);
-		
-                // The 4 points that select quadilateral on the input , from top-left in clockwise order
-                // These four pts are the sides of the rect box used as input
-                // This step is to tranform our vect to an array (ugly)
-                // cout << "Angle coordinates : " << endl;
+    string line;
+    //if the file is empty   // get the reference manually
+    if(!getline(fichier, line)) {
+      // Create window and callback to mouse clicks
+      namedWindow("Image");
+      setMouseCallback("Image", onMouse, static_cast<void*>(&input_vect));
+      
+      // Wait until we have 4 points
+      while(input_vect.size() < 4) {
+	// Display image
+	imshow("Image", input);
+	
+	// Display points live
+	if (input_vect.size()) circle(input, input_vect[input_vect.size() - 1], 10, Scalar(255, 0, 0), -1, CV_AA);
+	
+	// 50Hz refresh
+	waitKey(20);
+	
+	// The 4 points that select quadilateral on the input , from bottom-left in clockwise order
+	// These four pts are the sides of the rect box used as input
+	// This step is to tranform our vect to an array (ugly)
+	// cout << "Angle coordinates : " << endl;
+      }
+      
+      // Open the file in write mode to save the corners pos
+      ofstream fwrite(fichier_ref.c_str(), ios::out | ios::trunc);
+	  
+      if(fwrite)  //if fwrite opened with success
+	{ //write the coordinates in the file
+	  for (size_t i = 0; i < input_vect.size(); ++i) {
+	    input_quad[i] = input_vect[i];
+	    // We also display point coordinates in stdout
+	    fwrite <<  input_quad[i].x<<" "<<input_quad[i].y << endl;
+	    //		cout << "Point " << i + 1 << " : (" << input_quad[i].x << ", " << input_quad[i].y << ")" << endl;
 	  }
 	  
-            // Open the file in write mode to save the corners pos
-	  ofstream fwrite(fichier_ref.c_str(), ios::out | ios::trunc);
-	  
-	  if(fwrite)  //if fwrite opened with success
-            { //write the coordinates in the file
-	      for (size_t i = 0; i < input_vect.size(); ++i) {
-		input_quad[i] = input_vect[i];
-		// We also display point coordinates in stdout
-		fwrite <<  input_quad[i].x<<" "<<input_quad[i].y << endl;
-		//		cout << "Point " << i + 1 << " : (" << input_quad[i].x << ", " << input_quad[i].y << ")" << endl;
-	      }
-	      
-	      //close fwrite
-	      fwrite.close();
-            }//end fwrite opened with success
-	  else  // sinon
-	    cerr << "Erreur à l'ouverture en écriture !" << endl;
-        }//end if fichier empty
-        //File not empty
-        else {
-	  //return to the file's beginning
-	  fichier.seekg(0, ios::beg);
-	  //cout << endl << "On se trouve au " << fichier.tellg() << "ieme octet." << endl;
-	  //read coordinates from the file
-	  //      string::size_type sz;   // alias of size_t
-	  string contenu;  // déclaration d'une chaîne qui contiendra la ligne lue
-	  try {
-	    for (size_t i = 0; i <4; ++i) {
-	      fichier >> contenu;//to get the first string
-	      input_quad[i].x = stoi(contenu, NULL, 0);
-	      //cout << "x" << i << "=" << contenu;
-	      fichier >> contenu;//to get the first string
-	      input_quad[i].y = stoi(contenu, NULL, 0);
-	      //  cout << " ,y" << i << "=" << contenu << endl;
-	    }
-	  } catch(std::invalid_argument& e) {
-	  cerr<<"No covert stoi"<<endl;
-	  }
-	  
-	  fichier.close();  // je referme le fichier
+	  //close fwrite
+	  fwrite.close();
+	}//end fwrite opened with success
+      else 
+	cerr << "Erreur à l'ouverture en écriture !" << endl;
+    }//end if fichier empty
+    //File not empty
+    else {
+      //return to the file's beginning
+      fichier.seekg(0, ios::beg);
+      //cout << endl << "On se trouve au " << fichier.tellg() << "ieme octet." << endl;
+      //read coordinates from the file
+      string contenu;  // déclaration d'une chaîne qui contiendra la ligne lue
+      try {
+	for (size_t i = 0; i <4; ++i) {
+	  fichier >> contenu;//to get the first string
+	  input_quad[i].x = stoi(contenu, NULL, 0);
+	  //cout << "x" << i << "=" << contenu;
+	  fichier >> contenu;//to get the first string
+	  input_quad[i].y = stoi(contenu, NULL, 0);
+	  //  cout << " ,y" << i << "=" << contenu << endl;
 	}
+      } catch(std::invalid_argument& e) {
+	cerr<<"No covert stoi"<<endl;
+      }
+      
+      fichier.close();  // file closed
+    }
   }//end if fichier opened
   else
     cerr << "Erreur à l'ouverture en lecture!" << endl;
   
   Point pts[4];
-  //    mask=Mat::zeros(image.rows, image.cols, CV_8UC3);
   mask=image.clone();
   for (size_t i = 0; i <4 ; ++i)
     pts[i]=input_quad[i];
   
   //Security mask : Top-Right ______begin
-  pts[1].y=0; pts[1].x=input_quad[1].x-30;
+  pts[1].y=0; pts[1].x=(int)input_quad[1].x-30;
   pts[2].y=0;
   //Right
   pts[2].x=image.cols;
-  pts[3].x=image.cols; pts[3].y=input_quad[3].y+30;
-  //Make the mask larger
+  pts[3].x=image.cols; pts[3].y=(int)input_quad[3].y+30;
+  //Make the mask larger 
   pts[0].x=max(0,(int)(input_quad[0].x-30));
   pts[0].y=min(image.rows,(int)(input_quad[0].y+30));
   //Security mask : Top-Right ______end
@@ -129,21 +126,13 @@ Mat transformImage(const Mat &image, const int& size) {
     pts[1].x=0;  pts[0].x=0; 
   */
   //Security mask : Top-Left  ______end
+
   
   //create security mask
   fillConvexPoly(mask, pts,4,Scalar(255,255,255) );
   
-  /*!! The security area should be clear in the first image !!*/
-  if (first_parse){
-    //Create security reference for the first image parse
-    imwrite ("security_boundary.jpg",mask);
-    first_parse=0;
-  }
-  
   // Get the Perspective Transform Matrix i.e. lambda
   Mat lambda = getPerspectiveTransform(input_quad, output_quad);
-  // cout << "Transformation matrix : " << endl;
-  // cout << lambda << endl;
   
   // Apply the Perspective Transform just found to the src image
   Mat output;
@@ -154,53 +143,62 @@ Mat transformImage(const Mat &image, const int& size) {
 int createReference(const string &filename, const string &refname, const int& size) {
   // Load the image
   Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
-  ofstream f(fichier_ref, ios::out|ios::trunc);//empty the file anf create it if it doesn't exist
+  if (image.empty()){
+    cerr<<"Empty Reference" <<endl;
+    return 1;
+  }
+ 
+  ofstream f(fichier_ref, ios::out|ios::trunc);//empty the file if it does exist & create it if it doesn't 
   f.close(); //close the file
   //Resize image
   resize(image, image, Size(size,size), 0, 0, CV_INTER_LINEAR);
-  
+    
   // Output image
   Mat output = transformImage(image, size);
 
+  //!! The security area should be clear in the first image !!
+  //Display the security reference
+  imshow("Security Mask",mask);
+  imwrite ("security_mask.jpg",mask);
+  waitKey(0);
+  
   //Display output
-  imshow("Output",output);
-  imwrite(refname, output);
-
+  imshow("Reference",output);
+  imwrite("Reference.jpg", output);
+  
   waitKey(0);
   return EXIT_SUCCESS;
 }
 
-string getPieces(Mat &image, const string &refname) {
 
-  // Load the image
-  // Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
+
+string getPieces(Mat &image) {
+
   // Load reference image
-  Mat reference = imread(refname, CV_LOAD_IMAGE_COLOR);
+  Mat reference = imread("Reference.jpg", CV_LOAD_IMAGE_COLOR);
+  if (reference.empty()){
+    cerr<<"Empty reference" <<endl;
+    return 0;
+  }
+
   int size = reference.size().height;
   //Resize image to be visible in all cases
   resize(image, image, reference.size(), 0, 0, CV_INTER_LINEAR);
 
   // Output image
   Mat output = transformImage(image, size);
-
-  //Display output
-  //  destroyWindow(filename);
-
-  imshow("Output", output);
-  imshow("Reference", reference);
   
-  Mat diff_w,diff_b, white ,plus;
-  plus = output.clone();
+  //Display output
+  //imshow("Output", output);
+  //imshow("Reference", reference);
+  
+  Mat diff_w,diff_b, white ;
+  
   // Compute difference between image and reference
   absdiff(output , reference, diff_b);
   diff_w = output - reference;
   
-  for(int j = 0; j <= 5; j++) {
-      plus += diff_b;
-  }
-
-  //imshow("Difference", diff_b);
-  // imshow("plus",plus);   
+  //imshow("Black Difference", diff_b);
    
   //Contrast treatement
   Mat contrast_diff1,contrast_ref,contrast_black;
@@ -212,16 +210,14 @@ string getPieces(Mat &image, const string &refname) {
   // Morphological opening and closing to filter noise
   int morph_size = size / 20;
   Mat kernel = getStructuringElement(CV_SHAPE_ELLIPSE, Size(morph_size, morph_size)) * 255;
-  //  std::cout << "Morph kernel : " << std::endl;
-  //  std::cout << kernel << std::endl;
   morphologyEx(diff_w, diff_w, MORPH_OPEN, kernel);
   //  cv::imshow("After opening", difference);
-   
   morphologyEx(diff_w, diff_w,MORPH_CLOSE, kernel);
   //imshow("After closing", diff_w);
+  
   Mat diff_w_gray, diff_b_gray;
   cvtColor( diff_w, diff_w_gray, CV_BGR2GRAY );
-  cvtColor( diff_b, diff_b_gray, CV_BGR2GRAY );
+  // cvtColor( diff_b, diff_b_gray, CV_BGR2GRAY );
   //threshold( diff_w_gray, diff_w_gray,30, 255,THRESH_BINARY_INV  );
   threshold( diff_w_gray, diff_w_gray, 20,255,THRESH_BINARY);
   //imshow("After thresh",diff_w_gray);
@@ -229,7 +225,7 @@ string getPieces(Mat &image, const string &refname) {
   // threshold( diff_b_gray, diff_b_gray, 15,255,THRESH_BINARY);
   // imshow("After thresh",diff_b_gray);
   //waitKey(0);
- cvtColor(diff_b_gray, diff_b_gray, COLOR_GRAY2BGR);
+  //cvtColor(diff_b_gray, diff_b_gray, COLOR_GRAY2BGR);
   //imshow("After gray",diff_b_gray);
   Mat difference;
   cvtColor(diff_w_gray, difference, CV_GRAY2BGR );
@@ -272,6 +268,7 @@ string getPieces(Mat &image, const string &refname) {
       cvtColor(roi_b, roi_b, COLOR_BGR2HSV);
       Scalar mean_hsv_b = mean(roi_b);
       string doubt;
+      
       // If value is above threshold, a piece is present
         cout << index << " : (" << rect_x << ", " << rect_y << ")" << endl;
       // std::cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
@@ -301,13 +298,11 @@ string getPieces(Mat &image, const string &refname) {
 	}
   }
   
-  //cout << "(Black) BOARD : " << bitset<32>(b_pieces) << " (" << b_pieces << ")" << endl;
-  //cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
   cout << "(Black) BOARD : " << bitset<32>(b_pieces) << " (" << b_pieces << ")" << endl;
   cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
   string pieces= to_string(w_pieces)+"+"+ to_string(b_pieces);
   cerr<<" white + Black (sent to AI) : "<<pieces<<" With "<<doubt_count<<" doubts"<<endl;
-    
+  
   return pieces;
 }
 
@@ -317,13 +312,17 @@ int security(Mat src){
   int security_coef, warning=0;
   Scalar m;
   Mat diff;
-  Mat security_ref=imread("security_boundary.jpg");
+  Mat security_ref=imread("security_mask.jpg");
+  if(security_ref.empty()){
+    cerr<<"Empty Security reference"<<endl;
+    return 1 ;
+  }
   cvtColor(security_ref,security_ref,CV_BGR2GRAY);
   cvtColor(mask,mask,CV_BGR2GRAY);
   imshow("Board", src);
   waitKey(50);
   diff=abs(mask-security_ref);
- 
+  
   //security_coef=1; //log9
   security_coef=7; //log7
   
@@ -331,7 +330,7 @@ int security(Mat src){
   if(m[0]>security_coef){
     warning=1;
     imshow ("Board",diff);
-    waitKey(0);
+    waitKey(50);
     cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
     cerr<<"An object is crossing the security Area "<<m[0]<<endl;
     cerr<<endl;
@@ -339,15 +338,14 @@ int security(Mat src){
   return warning;
 }
 
-int imageGetPieces(const string &filename,const string &refname) {
-    // Load the imagefichier_ref
-    Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
-    string pieces= getPieces(image, refname);
-    waitKey(1);
-    return EXIT_SUCCESS;
+int imageGetPieces(const string &filename) {
+  Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
+  string pieces= getPieces(image);
+  waitKey(0);
+  return EXIT_SUCCESS;
 }
 
-int stat(const string &directory,const string &refname){
+int stat(const string &directory){
   string result="None";
   int error=0;
   int success=0;
@@ -379,18 +377,20 @@ int stat(const string &directory,const string &refname){
     filenames.push_back(file_name); // returns just filename
   }
   closedir(dir);
+  
   int num_files=filenames.size(); // how many we found
   //cout << "Number of files = " << num_files << endl;
-  cv::namedWindow( "Board", 1 );
+  
   for(size_t i = 0; i < filenames.size(); ++i){
     Mat src = imread(directory + filenames[i]);
     if(!src.data) { //Protect against no file
       cerr << directory + filenames[i] << ", file #" << i << ", is not an image" << endl;
       continue;
     }
-    string pieces= getPieces(src, refname);
+    string pieces= getPieces(src);
     string p_name=filenames[i];
-      if (p_name.size () > 0)  p_name.resize (p_name.size () - 4);
+    //Remove the file extension
+    if (p_name.size () > 0)  p_name.resize (p_name.size () - 4);
     if(pieces.compare(p_name)==0){      
       result=" Success";
       success++; 
@@ -403,7 +403,7 @@ int stat(const string &directory,const string &refname){
     cerr<<"Name  ="<<p_name<<endl;
     cerr<<"Result = " << result << endl;
     cerr<<endl;
-    //control security borders
+    //control security area
     int warning=security(src); // 1:an object was detected; 0 : clear 
   }
   cerr<<endl;
@@ -413,49 +413,49 @@ int stat(const string &directory,const string &refname){
 } 
 
 
-int videoGetPieces(const string &refname) {
-    Mat image;
-    VideoCapture cap(0); // open the default camera
-    VideoCapture cap(1); // open the default camera
-    if(!cap.isOpened())  // check if we succeeded
-        return -1;
+int videoGetPieces() {
+  Mat image;
+   VideoCapture cap(0); // open the default camera
+  //VideoCapture cap(1); // open the default camera
+  if(!cap.isOpened())  // check if we succeeded
+    return -1;
   
-    string requestForPieces = "1";
-    TCPHelper soc = TCPHelper("127.0.0.1", "20000");
+  string requestForPieces = "1";
+  TCPHelper soc = TCPHelper("127.0.0.1", "20000");
+  
+  while(1) {
+    cout << "Waiting for connection" << endl;
+    soc.connect();
 
     while(1) {
-        cout << "Waiting for connection" << endl;
-        soc.connect();
-
-        while(1) {
-          std::cout << "Waiting for incoming data" << std::endl;
-          string data = soc.receive();
-
-          // If we receive data
-          if(data.length() > 0) {
-              cap >> image; // get a new frame from camera
-
-              string pieces = getPieces(image, refname);
-              //string pieces = "305419896+4294967295"; // For testing purposes
-
-              std::cout << "Sending pieces data" << std::endl;
-              soc.send(pieces);
-              cout << "The message : "<< pieces <<" was sent to the Game"<<endl;
-
-              //show captured frame from the video
-              imshow("board", image);
-              waitKey(0);
-          } else {
-	    cout << "Nothing else to read" << endl;
-              break;
-          }
-        }
-
-        std::cout << "Disconnecting client" << std::endl;
-        soc.disconnect();
+      std::cout << "Waiting for incoming data" << std::endl;
+      string data = soc.receive();
+      
+      // If we receive data
+      if(data.length() > 0) {
+	cap >> image; // get a new frame from camera
+	
+	string pieces = getPieces(image);
+	//string pieces = "305419896+4294967295"; // For testing purposes
+	
+	std::cout << "Sending pieces data" << std::endl;
+	soc.send(pieces);
+	cout << "The message : "<< pieces <<" was sent to the Game"<<endl;
+	
+	//show captured frame from the video
+	imshow("board", image);
+	waitKey(0);
+      } else {
+	cout << "Nothing else to read" << endl;
+	break;
+      }
     }
 
-    soc.closeSocket();
- 
-    return EXIT_SUCCESS;
+    std::cout << "Disconnecting client" << std::endl;
+    soc.disconnect();
+  }
+  
+  soc.closeSocket();
+  
+  return EXIT_SUCCESS;
 } 
