@@ -22,10 +22,10 @@ void onMouse(int event, int x, int y, int flags, void* data);
 
 Mat transformImage(const Mat &image, const int& size);
 int createReference(const string &emptyref, const string &fullref, const int& size);
-int videoGetPieces();
-int imageGetPieces(const string &filename);
-string getPieces(Mat &image,int calib); 
-int stat(const string &foldername);
+int videoGetPieces(int black_thresh);
+int imageGetPieces(const string &filename,int black_thresh);
+string getPieces(Mat &image,int black_thresh,int calib); 
+int stat(const string &foldername,int black_thresh);
 int security(Mat src);
 
 #endif

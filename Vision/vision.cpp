@@ -167,7 +167,7 @@ int createReference(const string &emptyname, const string &fullname, const int& 
   //Display output
   imshow("Reference",output);
   imwrite("Reference.jpg", output);
-  string thresh=getPieces(full,1);
+  string thresh=getPieces(full,0,1);
   cerr<<"Best thresh value = "<<thresh<<endl;
   waitKey(0);
   return EXIT_SUCCESS;
@@ -175,7 +175,7 @@ int createReference(const string &emptyname, const string &fullname, const int& 
 
 
 
-string getPieces(Mat &image, int calib) {
+string getPieces(Mat &image, int black_thresh , int calib) {
 
   
   // Load reference image
@@ -246,11 +246,16 @@ string getPieces(Mat &image, int calib) {
 
   // Split image in rectangles to detect presence of cells
   int rect_size = size / 8;
+
+
   
   // Initialize bitboard
   uint32_t w_pieces = 0;
   uint32_t b_pieces = 0;
   int doubt_count =0;
+
+  int min=255;
+  int max=0;
   // Loop by line
   for(int j = 7; j >= 0; --j) {
     // Computing Y coordinate
@@ -262,6 +267,7 @@ string getPieces(Mat &image, int calib) {
       
       // Computing cell index
       int index = 4*j + i;
+
       uint32_t cell = 1 << index; 
       // Fetch cell
       Mat roi = difference(Rect(rect_x, rect_y, rect_size, rect_size));
@@ -271,6 +277,9 @@ string getPieces(Mat &image, int calib) {
       // Fetch cell
       // Mat roi_b = diff_b(Rect(rect_x, rect_y, rect_size, rect_size));   
        Mat roi_b = img_hsv(Rect(rect_x, rect_y, rect_size, rect_size));
+
+      
+
        
       // Convert to HSV to get Value
        threshold_r = 200;
@@ -283,14 +292,28 @@ string getPieces(Mat &image, int calib) {
       //black
       Scalar mean_b = mean(roi_b);
 
-      string doubt;
+      //min black pieces
+      if((index<12)&&(index>=0)){
+	if(min>mean_b.val[2])
+	  min=mean_b.val[2];
+       }
+
+
+      //max empty boxes
+      if((index<20)&&(index>=12)){
+	if(max<mean_b.val[2])
+	  max=mean_b.val[2];
+       }
       
+      string doubt;
+      //int black_thresh=174;
+      int white_thresh=10;
       // If value is above threshold, a piece is present
         cout << index << " : (" << rect_x << ", " << rect_y << ")" << endl;
       // std::cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
-      if (mean_w.val[2] > threshold_v) {
+      if (mean_w.val[2] > white_thresh) {
 	doubt="";
-	if (abs(mean_w.val[2]- threshold_v)<10)
+	if (abs(mean_w.val[2]- white_thresh)<10)
 	  { doubt="With doupt";
 	    doubt_count++;
 	  }
@@ -299,9 +322,9 @@ string getPieces(Mat &image, int calib) {
         w_pieces |= cell;
       }
       else
-	if (mean_b.val[2] > threshold_r) {
+	if (mean_b.val[2] > black_thresh) {
 	  doubt="";
-	  if (abs(mean_b.val[2]- threshold_r)<10)
+	  if (abs(mean_b.val[2]- black_thresh)<10)
 	    { doubt="With doupt";
 	      doubt_count++;
 	    }
@@ -318,7 +341,9 @@ string getPieces(Mat &image, int calib) {
  
 
 if(calib){
-   int thresh=threshold_r; 
+  int thresh;//=max-30;
+  // if(thresh <max)
+  thresh = max+ (min-max)*3/4;
 
    
    return to_string(thresh);
@@ -367,14 +392,14 @@ int security(Mat src){
   return warning;
 }
 
-int imageGetPieces(const string &filename) {
+int imageGetPieces(const string &filename, int black_thresh) {
   Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
-  string pieces= getPieces(image,0);
+  string pieces= getPieces(image, black_thresh,0);
   waitKey(0);
   return EXIT_SUCCESS;
 }
 
-int stat(const string &directory){
+int stat(const string &directory,int black_thresh){
   string result = "None";
   int error = 0;
   int success = 0;
@@ -416,7 +441,7 @@ int stat(const string &directory){
       cerr << directory + filenames[i] << ", file #" << i << ", is not an image" << endl;
       continue;
     }
-    string pieces= getPieces(src,0);
+    string pieces= getPieces(src,black_thresh,0);
     string p_name=filenames[i];
     //Remove the file extension
     if (p_name.size () > 0)  p_name.resize (p_name.size () - 4);
@@ -475,7 +500,7 @@ void socket_thread() {
   soc.closeSocket();
 }
 
-int videoGetPieces() {
+int videoGetPieces(int black_thresh) {
     Mat image;
     VideoCapture cap(0); // open the default camera
 
@@ -488,7 +513,7 @@ int videoGetPieces() {
     while(1) {
         Mat image;
         cap >> image; // get a new frame from camera
-        string pieces = getPieces(image, 0);
+        string pieces = getPieces(image, black_thresh, 0);
 
         //show captured frame from the video
         imshow("board", image);
