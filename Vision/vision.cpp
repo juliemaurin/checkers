@@ -177,13 +177,14 @@ int createReference(const string &emptyname, const string &fullname, const int& 
 
 string getPieces(Mat &image, int calib) {
 
+  
   // Load reference image
   Mat reference = imread("Reference.jpg", CV_LOAD_IMAGE_COLOR);
   if (reference.empty()){
     cerr<<"Empty reference" <<endl;
     return 0;
   }
-
+  int threshold_r, threshold_v;
   int size = reference.size().height;
   //Resize image to be visible in all cases
   resize(image, image, reference.size(), 0, 0, CV_INTER_LINEAR);
@@ -209,33 +210,43 @@ string getPieces(Mat &image, int calib) {
   int beta = 0;  //< Simple brightness control
   diff_b.convertTo(contrast_diff1, -1, alpha, beta);
   //imshow("contrast apres premier difference",contrast_diff1);
-  
+
   // Morphological opening and closing to filter noise
   int morph_size = size / 20;
   Mat kernel = getStructuringElement(CV_SHAPE_ELLIPSE, Size(morph_size, morph_size)) * 255;
+  
+  //  imshow("contratsdiff1 to HSV",contrast_diff1);
+  //waitKey(0);
+  //black
+  morphologyEx(contrast_diff1,contrast_diff1,MORPH_CLOSE, kernel);
+  morphologyEx(contrast_diff1,contrast_diff1,MORPH_OPEN, kernel);
+  //imshow("contratsdiff1 to HSV",contrast_diff1);
+  // waitKey(0);
+  Mat img_hsv;
+  cvtColor(contrast_diff1, img_hsv, CV_BGR2HSV);
+  //  imshow("contratsdiff1 to HSV",img_hsv);
+  //waitKey(0);
+ 
+
+
+  //White  
   morphologyEx(diff_w, diff_w, MORPH_OPEN, kernel);
-  //  cv::imshow("After opening", difference);
+  //imshow("After opening", diff_w);
   morphologyEx(diff_w, diff_w,MORPH_CLOSE, kernel);
   //imshow("After closing", diff_w);
   
-  Mat diff_w_gray, diff_b_gray;
+  Mat diff_w_gray;
   cvtColor( diff_w, diff_w_gray, CV_BGR2GRAY );
-  // cvtColor( diff_b, diff_b_gray, CV_BGR2GRAY );
-  //threshold( diff_w_gray, diff_w_gray,30, 255,THRESH_BINARY_INV  );
   threshold( diff_w_gray, diff_w_gray, 20,255,THRESH_BINARY);
   //imshow("After thresh",diff_w_gray);
 
-  // threshold( diff_b_gray, diff_b_gray, 15,255,THRESH_BINARY);
-  // imshow("After thresh",diff_b_gray);
-  //waitKey(0);
-  //cvtColor(diff_b_gray, diff_b_gray, COLOR_GRAY2BGR);
-  //imshow("After gray",diff_b_gray);
+
   Mat difference;
   cvtColor(diff_w_gray, difference, CV_GRAY2BGR );
 
   // Split image in rectangles to detect presence of cells
   int rect_size = size / 8;
-
+  
   // Initialize bitboard
   uint32_t w_pieces = 0;
   uint32_t b_pieces = 0;
@@ -254,58 +265,60 @@ string getPieces(Mat &image, int calib) {
       uint32_t cell = 1 << index; 
       // Fetch cell
       Mat roi = difference(Rect(rect_x, rect_y, rect_size, rect_size));
+      // imshow(std::to_string(num), roi);
+      
       
       // Fetch cell
-      Mat roi_b = diff_b(Rect(rect_x, rect_y, rect_size, rect_size));
-      // cv::imshow(std::to_string(num), roi);
-      
+      // Mat roi_b = diff_b(Rect(rect_x, rect_y, rect_size, rect_size));   
+       Mat roi_b = img_hsv(Rect(rect_x, rect_y, rect_size, rect_size));
+       
       // Convert to HSV to get Value
-      int threshold_r = 15;
-      int threshold_v = 10;
-      Scalar mean_bgr = mean(roi);
+       threshold_r = 200;
+       threshold_v = 10;
+
+      //white
       cvtColor(roi, roi, COLOR_BGR2HSV);
-      Scalar mean_hsv =mean(roi);
+      Scalar mean_w =mean(roi);
       
       //black
-      Scalar mean_bgr_b = mean(roi_b);
-      cvtColor(roi_b, roi_b, COLOR_BGR2HSV);
-      Scalar mean_hsv_b = mean(roi_b);
+      Scalar mean_b = mean(roi_b);
+
       string doubt;
       
       // If value is above threshold, a piece is present
         cout << index << " : (" << rect_x << ", " << rect_y << ")" << endl;
       // std::cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
-      if (mean_hsv.val[2] > threshold_v) {
+      if (mean_w.val[2] > threshold_v) {
 	doubt="";
-	if (abs(mean_hsv.val[2]- threshold_v)<5)
+	if (abs(mean_w.val[2]- threshold_v)<10)
 	  { doubt="With doupt";
 	    doubt_count++;
 	  }
-	cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
+	cout << "    mean_White" << mean_w;
 	cout << "WHITE PIECE FOUND  "<< doubt;
         w_pieces |= cell;
       }
       else
-	if (mean_hsv_b.val[2] > threshold_r) {
+	if (mean_b.val[2] > threshold_r) {
 	  doubt="";
-	  if (abs(mean_hsv_b.val[2]- threshold_r)<5)
+	  if (abs(mean_b.val[2]- threshold_r)<10)
 	    { doubt="With doupt";
 	      doubt_count++;
 	    }
-	  cout << "    BGR b " << mean_bgr_b << " HSV b" << mean_hsv_b;
+	  cout << "    mean Black " << mean_b ;
 	  cout << "BLACK PIECE FOUND  " << doubt;
 	  b_pieces |= cell;
 	} else
-	  cout << "    BGR" << mean_bgr_b << " HSV" << mean_hsv_b;
-	   cout << endl;
-	}
+	  cout << "   mean Empty" << mean_b;
+      cout << endl;
+    }
   }
   
   
  
 
 if(calib){
-   int thresh=0; 
+   int thresh=threshold_r; 
 
    
    return to_string(thresh);
