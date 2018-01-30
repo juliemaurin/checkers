@@ -466,18 +466,18 @@ int videoGetPieces() {
       throw std::runtime_error("VideoCapture : could not open camera");
   
     string requestForPieces = "1";
-    // thread st(socket_thread);
+
+    thread st(socket_thread);
 
     while(1) {
         // Get a new frame
         Mat image;
         cap >> image; // get a new frame from camera
-        string pieces = getPieces(image, 0);
 
         // Parse frame
-        string pieces = getPieces(image);
+        string pieces = getPieces(image, 0);
 
-        int warning = security(image); // 1:an object was detected; 0 : clear
+        int warning = security(image);
 
         if (warning) {
             std::cout << "SECURITY ERROR" << std::endl;
