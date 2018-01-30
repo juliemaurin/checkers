@@ -140,11 +140,13 @@ Mat transformImage(const Mat &image, const int& size) {
   return output;
 }
 
-int createReference(const string &filename, const string &refname, const int& size) {
+int createReference(const string &emptyname, const string &fullname, const int& size) {
   // Load the image
-  Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
-  if (image.empty()){
-    cerr<<"Empty Reference" <<endl;
+  Mat image = imread(emptyname, CV_LOAD_IMAGE_COLOR);
+  Mat full = imread(fullname, CV_LOAD_IMAGE_COLOR);
+   
+  if ((image.empty())||(full.empty())){
+    cerr<<"Empty References" <<endl;
     return 1;
   }
  
@@ -165,14 +167,15 @@ int createReference(const string &filename, const string &refname, const int& si
   //Display output
   imshow("Reference",output);
   imwrite("Reference.jpg", output);
-  
+  string thresh=getPieces(full,1);
+  cerr<<"Best thresh value = "<<thresh<<endl;
   waitKey(0);
   return EXIT_SUCCESS;
 }
 
 
 
-string getPieces(Mat &image) {
+string getPieces(Mat &image, int calib) {
 
   // Load reference image
   Mat reference = imread("Reference.jpg", CV_LOAD_IMAGE_COLOR);
@@ -298,15 +301,28 @@ string getPieces(Mat &image) {
 	}
   }
   
-  cout << "(Black) BOARD : " << bitset<32>(b_pieces) << " (" << b_pieces << ")" << endl;
-  cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
-  string pieces= to_string(w_pieces)+"+"+ to_string(b_pieces);
-  cerr<<" white + Black (sent to AI) : "<<pieces<<" With "<<doubt_count<<" doubts"<<endl;
   
-  return pieces;
+ 
+
+if(calib){
+   int thresh=0; 
+
+   
+   return to_string(thresh);
+ }
+ else{
+   cout << "(Black) BOARD : " << bitset<32>(b_pieces) << " (" << b_pieces << ")" << endl;
+   cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
+   string pieces= to_string(w_pieces)+"+"+ to_string(b_pieces);
+   cerr<<" white + Black (sent to AI) : "<<pieces<<" With "<<doubt_count<<" doubts"<<endl;
+   
+   return pieces;
+   
+ }
+
 }
-
-
+ 
+ 
 //Compare an image to the security mask
 int security(Mat src){
   int security_coef, warning=0;
@@ -340,7 +356,7 @@ int security(Mat src){
 
 int imageGetPieces(const string &filename) {
   Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
-  string pieces= getPieces(image);
+  string pieces= getPieces(image,0);
   waitKey(0);
   return EXIT_SUCCESS;
 }
@@ -387,7 +403,7 @@ int stat(const string &directory){
       cerr << directory + filenames[i] << ", file #" << i << ", is not an image" << endl;
       continue;
     }
-    string pieces= getPieces(src);
+    string pieces= getPieces(src,0);
     string p_name=filenames[i];
     //Remove the file extension
     if (p_name.size () > 0)  p_name.resize (p_name.size () - 4);
@@ -435,7 +451,7 @@ int videoGetPieces() {
       if(data.length() > 0) {
 	cap >> image; // get a new frame from camera
 	
-	string pieces = getPieces(image);
+	string pieces = getPieces(image,0);
 	//string pieces = "305419896+4294967295"; // For testing purposes
 	
 	std::cout << "Sending pieces data" << std::endl;
