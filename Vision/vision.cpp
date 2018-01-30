@@ -1,6 +1,7 @@
 #include "vision.h"
 
 static Mat mask;
+static string pieces_valid;
 
 // onMouse event callback function
 void onMouse(int event, int x, int y, int, void* data) {
@@ -180,8 +181,7 @@ string getPieces(Mat &image, int calib) {
   // Load reference image
   Mat reference = imread("Reference.jpg", CV_LOAD_IMAGE_COLOR);
   if (reference.empty()){
-    cerr<<"Empty reference" <<endl;
-    return 0;
+      throw std::runtime_error("getPieces : Empty reference");
   }
 
   int size = reference.size().height;
@@ -442,13 +442,9 @@ void socket_thread() {
 
         // If we receive data
         if(data.length() > 0) {
-
-            // CAPTURE LAST PROCESSED DATA
-            string pieces = "305419896+4294967295"; // For testing purposes
-
             std::cout << "Sending pieces data" << std::endl;
-            soc.send(pieces);
-            cout << "The message : "<< pieces <<" was sent to the Game"<<endl;
+            soc.send(pieces_valid);
+            cout << "The message : "<< pieces_valid <<" was sent to the Game"<<endl;
         } else {
           cout << "Nothing else to read" << endl;
             break;
@@ -473,15 +469,25 @@ int videoGetPieces() {
     // thread st(socket_thread);
 
     while(1) {
+        // Get a new frame
         Mat image;
         cap >> image; // get a new frame from camera
         string pieces = getPieces(image, 0);
 
-        //show captured frame from the video
-        imshow("board", image);
-        waitKey(1);
+        // Parse frame
+        string pieces = getPieces(image);
 
-        std::cout << "Disconnecting client" << std::endl;
+        int warning = security(image); // 1:an object was detected; 0 : clear
+
+        if (warning) {
+            std::cout << "SECURITY ERROR" << std::endl;
+          } else {
+            pieces_valid = pieces;
+          }
+
+        //show captured frame from the video
+        imshow("Video feed", image);
+        waitKey(1);
     } 
     return EXIT_SUCCESS;
 }
