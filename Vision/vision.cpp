@@ -342,7 +342,7 @@ int security(Mat src){
   //security_coef=1; //log9
   security_coef=7; //log7
   
-  m= mean (diff);
+  m = mean (diff);
   if(m[0]>security_coef){
     warning=1;
     imshow ("Board",diff);
@@ -362,9 +362,9 @@ int imageGetPieces(const string &filename) {
 }
 
 int stat(const string &directory){
-  string result="None";
-  int error=0;
-  int success=0;
+  string result = "None";
+  int error = 0;
+  int success = 0;
   
   cout << "Reading in directory " <<directory << endl;
   // GetFilesInDirectory
@@ -426,52 +426,62 @@ int stat(const string &directory){
   cerr << "Total number of test images   : "<<num_files<<endl;
   cerr<< "   Number of successful tests : "<<success<<endl;
   cerr<< "   Number of failed tests     : "<<error<<endl;
-} 
+}
 
+void socket_thread() {
+  cout << "Starting socket thread" << endl;
+  TCPHelper soc = TCPHelper("127.0.0.1", "20000");
+
+  while(1) {
+      cout << "Waiting for connection" << endl;
+      soc.connect();
+
+      while(1) {
+        std::cout << "Waiting for incoming data" << std::endl;
+        string data = soc.receive();
+
+        // If we receive data
+        if(data.length() > 0) {
+
+            // CAPTURE LAST PROCESSED DATA
+            string pieces = "305419896+4294967295"; // For testing purposes
+
+            std::cout << "Sending pieces data" << std::endl;
+            soc.send(pieces);
+            cout << "The message : "<< pieces <<" was sent to the Game"<<endl;
+        } else {
+          cout << "Nothing else to read" << endl;
+            break;
+        }
+      }
+
+      std::cout << "Disconnecting client" << std::endl;
+      soc.disconnect();
+  }
+
+  soc.closeSocket();
+}
 
 int videoGetPieces() {
-  Mat image;
-   VideoCapture cap(0); // open the default camera
-  //VideoCapture cap(1); // open the default camera
-  if(!cap.isOpened())  // check if we succeeded
-    return -1;
+    Mat image;
+    VideoCapture cap(0); // open the default camera
+
+    if(!cap.isOpened())
+      throw std::runtime_error("VideoCapture : could not open camera");
   
-  string requestForPieces = "1";
-  TCPHelper soc = TCPHelper("127.0.0.1", "20000");
-  
-  while(1) {
-    cout << "Waiting for connection" << endl;
-    soc.connect();
+    string requestForPieces = "1";
+    // thread st(socket_thread);
 
     while(1) {
-      std::cout << "Waiting for incoming data" << std::endl;
-      string data = soc.receive();
-      
-      // If we receive data
-      if(data.length() > 0) {
-	cap >> image; // get a new frame from camera
-	
-	string pieces = getPieces(image,0);
-	//string pieces = "305419896+4294967295"; // For testing purposes
-	
-	std::cout << "Sending pieces data" << std::endl;
-	soc.send(pieces);
-	cout << "The message : "<< pieces <<" was sent to the Game"<<endl;
-	
-	//show captured frame from the video
-	imshow("board", image);
-	waitKey(0);
-      } else {
-	cout << "Nothing else to read" << endl;
-	break;
-      }
-    }
+        Mat image;
+        cap >> image; // get a new frame from camera
+        string pieces = getPieces(image, 0);
 
-    std::cout << "Disconnecting client" << std::endl;
-    soc.disconnect();
-  }
-  
-  soc.closeSocket();
-  
-  return EXIT_SUCCESS;
-} 
+        //show captured frame from the video
+        imshow("board", image);
+        waitKey(1);
+
+        std::cout << "Disconnecting client" << std::endl;
+    } 
+    return EXIT_SUCCESS;
+}

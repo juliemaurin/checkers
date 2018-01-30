@@ -10,6 +10,7 @@ public:
   AgentVision(PieceType self);
   virtual ~AgentVision();
   virtual Word make_move(const CheckerBoard &board);
+  void replace_board(CheckerBoard &board);
 
 private:
   PieceType self;

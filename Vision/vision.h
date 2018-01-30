@@ -10,7 +10,7 @@
 #include <dirent.h> 
 #include <sys/stat.h> 
 #include <algorithm>
-
+#include <thread>
 
 using namespace cv;
 using namespace std;

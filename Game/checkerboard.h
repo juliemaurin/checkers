@@ -31,6 +31,8 @@ public:
 
     const std::vector<Word> &get_moves() const;
 
+    void new_game(Word black, Word white, PieceType player);
+
     bool is_draw() const;
     bool is_over() const;
 
