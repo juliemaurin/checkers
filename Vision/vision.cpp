@@ -398,16 +398,13 @@ int security(Mat src){
   morphologyEx(thres,thres,MORPH_CLOSE, kernel);
   //imshow("difference",thres);
   //waitKey(0);
-
-  imshow("Board", src);
-  waitKey(50);
   
   m = mean (thres);
   cerr<<"security mean"<<m<<endl;
   if(m[0]>security_coef){
     warning=1;
     imshow ("Board",thres);
-    waitKey(0);
+    waitKey(1);
     cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
     cerr<<"An object is crossing the security Area "<<m[0]<<endl;
     cerr<<endl;
@@ -516,6 +513,10 @@ int stat(const string &directory, int black_thresh){
     cerr<<"Result = " << result << endl;
     cerr<<endl;
     //control security area
+
+    imshow("Board", src);
+    waitKey(50);
+
     int warning = security(src); // 1:an object was detected; 0 : clear
   }
   cerr<<endl;
@@ -585,7 +586,7 @@ int videoGetPieces(int black_thresh) {
 
         if (warning && is_robot_moving) {
             std::cout << "SECURITY ERROR" << std::endl;
-            //system("python emergency.py");
+            system("python emergency.py");
             throw std::runtime_error("SECURITY ERROR");
           } else {
             pieces_valid = pieces;
