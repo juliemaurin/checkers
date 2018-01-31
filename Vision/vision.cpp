@@ -168,7 +168,7 @@ int createReference(const string &emptyname, const string &fullname, const int& 
   //Display output
   imshow("Reference",output);
   imwrite("Reference.jpg", output);
-  string thresh=getPieces(full,1);
+  string thresh=getPieces(full,0,1);
   cerr<<"Best thresh value = "<<thresh<<endl;
   waitKey(0);
   return EXIT_SUCCESS;
@@ -176,14 +176,15 @@ int createReference(const string &emptyname, const string &fullname, const int& 
 
 
 
-string getPieces(Mat &image, int calib) {
+string getPieces(Mat &image, int black_thresh , int calib) {
 
+  
   // Load reference image
   Mat reference = imread("Reference.jpg", CV_LOAD_IMAGE_COLOR);
   if (reference.empty()){
       throw std::runtime_error("getPieces : Empty reference");
   }
-
+  int threshold_r, threshold_v;
   int size = reference.size().height;
   //Resize image to be visible in all cases
   resize(image, image, reference.size(), 0, 0, CV_INTER_LINEAR);
@@ -209,37 +210,52 @@ string getPieces(Mat &image, int calib) {
   int beta = 0;  //< Simple brightness control
   diff_b.convertTo(contrast_diff1, -1, alpha, beta);
   //imshow("contrast apres premier difference",contrast_diff1);
-  
+
   // Morphological opening and closing to filter noise
   int morph_size = size / 20;
   Mat kernel = getStructuringElement(CV_SHAPE_ELLIPSE, Size(morph_size, morph_size)) * 255;
+  
+  //  imshow("contratsdiff1 to HSV",contrast_diff1);
+  //waitKey(0);
+  //black
+  morphologyEx(contrast_diff1,contrast_diff1,MORPH_CLOSE, kernel);
+  morphologyEx(contrast_diff1,contrast_diff1,MORPH_OPEN, kernel);
+  //imshow("contratsdiff1 to HSV",contrast_diff1);
+  // waitKey(0);
+  Mat img_hsv;
+  cvtColor(contrast_diff1, img_hsv, CV_BGR2HSV);
+  //  imshow("contratsdiff1 to HSV",img_hsv);
+  //waitKey(0);
+ 
+
+
+  //White  
   morphologyEx(diff_w, diff_w, MORPH_OPEN, kernel);
-  //  cv::imshow("After opening", difference);
+  //imshow("After opening", diff_w);
   morphologyEx(diff_w, diff_w,MORPH_CLOSE, kernel);
   //imshow("After closing", diff_w);
   
-  Mat diff_w_gray, diff_b_gray;
+  Mat diff_w_gray;
   cvtColor( diff_w, diff_w_gray, CV_BGR2GRAY );
-  // cvtColor( diff_b, diff_b_gray, CV_BGR2GRAY );
-  //threshold( diff_w_gray, diff_w_gray,30, 255,THRESH_BINARY_INV  );
   threshold( diff_w_gray, diff_w_gray, 20,255,THRESH_BINARY);
   //imshow("After thresh",diff_w_gray);
 
-  // threshold( diff_b_gray, diff_b_gray, 15,255,THRESH_BINARY);
-  // imshow("After thresh",diff_b_gray);
-  //waitKey(0);
-  //cvtColor(diff_b_gray, diff_b_gray, COLOR_GRAY2BGR);
-  //imshow("After gray",diff_b_gray);
+
   Mat difference;
   cvtColor(diff_w_gray, difference, CV_GRAY2BGR );
 
   // Split image in rectangles to detect presence of cells
   int rect_size = size / 8;
 
+
+  
   // Initialize bitboard
   uint32_t w_pieces = 0;
   uint32_t b_pieces = 0;
   int doubt_count =0;
+
+  int min=255;
+  int max=0;
   // Loop by line
   for(int j = 7; j >= 0; --j) {
     // Computing Y coordinate
@@ -251,61 +267,83 @@ string getPieces(Mat &image, int calib) {
       
       // Computing cell index
       int index = 4*j + i;
+
       uint32_t cell = 1 << index; 
       // Fetch cell
       Mat roi = difference(Rect(rect_x, rect_y, rect_size, rect_size));
+      // imshow(std::to_string(num), roi);
+      
       
       // Fetch cell
-      Mat roi_b = diff_b(Rect(rect_x, rect_y, rect_size, rect_size));
-      // cv::imshow(std::to_string(num), roi);
+      // Mat roi_b = diff_b(Rect(rect_x, rect_y, rect_size, rect_size));   
+       Mat roi_b = img_hsv(Rect(rect_x, rect_y, rect_size, rect_size));
+
       
+
+       
       // Convert to HSV to get Value
-      int threshold_r = 15;
-      int threshold_v = 10;
-      Scalar mean_bgr = mean(roi);
+       threshold_r = 200;
+       threshold_v = 10;
+
+      //white
       cvtColor(roi, roi, COLOR_BGR2HSV);
-      Scalar mean_hsv =mean(roi);
+      Scalar mean_w =mean(roi);
       
       //black
-      Scalar mean_bgr_b = mean(roi_b);
-      cvtColor(roi_b, roi_b, COLOR_BGR2HSV);
-      Scalar mean_hsv_b = mean(roi_b);
-      string doubt;
+      Scalar mean_b = mean(roi_b);
+
+      //min black pieces
+      if((index<12)&&(index>=0)){
+	if(min>mean_b.val[2])
+	  min=mean_b.val[2];
+       }
+
+
+      //max empty boxes
+      if((index<20)&&(index>=12)){
+	if(max<mean_b.val[2])
+	  max=mean_b.val[2];
+       }
       
+      string doubt;
+      //int black_thresh=174;
+      int white_thresh=10;
       // If value is above threshold, a piece is present
         cout << index << " : (" << rect_x << ", " << rect_y << ")" << endl;
       // std::cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
-      if (mean_hsv.val[2] > threshold_v) {
+      if (mean_w.val[2] > white_thresh) {
 	doubt="";
-	if (abs(mean_hsv.val[2]- threshold_v)<5)
+	if (abs(mean_w.val[2]- white_thresh)<10)
 	  { doubt="With doupt";
 	    doubt_count++;
 	  }
-	cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
+	cout << "    mean_White" << mean_w;
 	cout << "WHITE PIECE FOUND  "<< doubt;
         w_pieces |= cell;
       }
       else
-	if (mean_hsv_b.val[2] > threshold_r) {
+	if (mean_b.val[2] > black_thresh) {
 	  doubt="";
-	  if (abs(mean_hsv_b.val[2]- threshold_r)<5)
+	  if (abs(mean_b.val[2]- black_thresh)<10)
 	    { doubt="With doupt";
 	      doubt_count++;
 	    }
-	  cout << "    BGR b " << mean_bgr_b << " HSV b" << mean_hsv_b;
+	  cout << "    mean Black " << mean_b ;
 	  cout << "BLACK PIECE FOUND  " << doubt;
 	  b_pieces |= cell;
 	} else
-	  cout << "    BGR" << mean_bgr_b << " HSV" << mean_hsv_b;
-	   cout << endl;
-	}
+	  cout << "   mean Empty" << mean_b;
+      cout << endl;
+    }
   }
   
   
  
 
 if(calib){
-   int thresh=0; 
+  int thresh;//=max-30;
+  // if(thresh <max)
+  thresh = max+ (min-max)*3/4;
 
    
    return to_string(thresh);
@@ -354,14 +392,14 @@ int security(Mat src){
   return warning;
 }
 
-int imageGetPieces(const string &filename) {
+int imageGetPieces(const string &filename, int black_thresh) {
   Mat image = imread(filename, CV_LOAD_IMAGE_COLOR);
-  string pieces= getPieces(image,0);
+  string pieces= getPieces(image, black_thresh,0);
   waitKey(0);
   return EXIT_SUCCESS;
 }
 
-int stat(const string &directory){
+int stat(const string &directory,int black_thresh){
   string result = "None";
   int error = 0;
   int success = 0;
@@ -403,7 +441,7 @@ int stat(const string &directory){
       cerr << directory + filenames[i] << ", file #" << i << ", is not an image" << endl;
       continue;
     }
-    string pieces= getPieces(src,0);
+    string pieces= getPieces(src,black_thresh,0);
     string p_name=filenames[i];
     //Remove the file extension
     if (p_name.size () > 0)  p_name.resize (p_name.size () - 4);
@@ -458,7 +496,7 @@ void socket_thread() {
   soc.closeSocket();
 }
 
-int videoGetPieces() {
+int videoGetPieces(int black_thresh) {
     Mat image;
     VideoCapture cap(0); // open the default camera
 
@@ -473,9 +511,7 @@ int videoGetPieces() {
         // Get a new frame
         Mat image;
         cap >> image; // get a new frame from camera
-
-        // Parse frame
-        string pieces = getPieces(image, 0);
+        string pieces = getPieces(image, black_thresh, 0);
 
         int warning = security(image);
 
