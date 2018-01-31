@@ -2,6 +2,7 @@
 
 static Mat mask;
 static string pieces_valid;
+static bool is_robot_moving = false;
 
 // onMouse event callback function
 void onMouse(int event, int x, int y, int, void* data) {
@@ -168,7 +169,7 @@ int createReference(const string &emptyname, const string &fullname, const int& 
   //Display output
   imshow("Reference",output);
   imwrite("Reference.jpg", output);
-  string thresh=getPieces(full,0,1);
+  string thresh = getPieces(full,0,1);
   cerr<<"Best thresh value = "<<thresh<<endl;
   waitKey(0);
   return EXIT_SUCCESS;
@@ -399,7 +400,43 @@ int imageGetPieces(const string &filename, int black_thresh) {
   return EXIT_SUCCESS;
 }
 
-int stat(const string &directory,int black_thresh){
+int videoCalib() {
+    VideoCapture cap(1);
+
+    if(!cap.isOpened())
+      throw std::runtime_error("VideoCapture : could not open camera");
+
+    std::cout << "Please press a key then enter when you have finished clearing the board (1/2)" << std::endl;
+    std::string c;
+    std::cin >> c;
+    std::cin.clear();
+
+    Mat empty;
+    cap >> empty;
+    imshow("Empty", empty);
+    imwrite("calib_empty.jpg", empty);
+
+    cap.release();
+
+    std::cout << "Please press a key then enter when you have finished filling the board (2/2)" << std::endl;
+    std::cin >> c;
+    std::cin.clear();
+
+    cap.open(1);
+
+    Mat full;
+    cap >> full;
+    imshow("Full", full);
+    imwrite("calib_full.jpg", full);
+
+    cap.release();
+
+    waitKey(0);
+
+    return createReference("calib_empty.jpg", "calib_full.jpg", 512);
+}
+
+int stat(const string &directory, int black_thresh){
   string result = "None";
   int error = 0;
   int success = 0;
@@ -458,7 +495,7 @@ int stat(const string &directory,int black_thresh){
     cerr<<"Result = " << result << endl;
     cerr<<endl;
     //control security area
-    int warning=security(src); // 1:an object was detected; 0 : clear 
+    int warning = security(src); // 1:an object was detected; 0 : clear
   }
   cerr<<endl;
   cerr << "Total number of test images   : "<<num_files<<endl;
@@ -480,9 +517,19 @@ void socket_thread() {
 
         // If we receive data
         if(data.length() > 0) {
-            std::cout << "Sending pieces data" << std::endl;
-            soc.send(pieces_valid);
-            cout << "The message : "<< pieces_valid <<" was sent to the Game"<<endl;
+            if (data.front() == 'M') {
+                is_robot_moving = true;
+                soc.send("ACK Moving");
+            } else if (data.front() == 'E') {
+                is_robot_moving = false;
+                soc.send("ACK End");
+            } else if (data.front() == 'R') {
+                std::cout << "Sending pieces data" << std::endl;
+                soc.send(pieces_valid);
+                cout << "The message : "<< pieces_valid <<" was sent to the Game"<<endl;
+            } else {
+                cout << "Unknown message : " << data << endl;
+            }
         } else {
           cout << "Nothing else to read" << endl;
             break;
@@ -498,7 +545,7 @@ void socket_thread() {
 
 int videoGetPieces(int black_thresh) {
     Mat image;
-    VideoCapture cap(0); // open the default camera
+    VideoCapture cap(1); // open the default camera
 
     if(!cap.isOpened())
       throw std::runtime_error("VideoCapture : could not open camera");
@@ -515,8 +562,10 @@ int videoGetPieces(int black_thresh) {
 
         int warning = security(image);
 
-        if (warning) {
+        if (warning && is_robot_moving) {
             std::cout << "SECURITY ERROR" << std::endl;
+            //system("python emergency.py");
+            throw std::runtime_error("SECURITY ERROR");
           } else {
             pieces_valid = pieces;
           }
