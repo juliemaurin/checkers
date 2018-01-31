@@ -99,21 +99,21 @@ Mat transformImage(const Mat &image, const int& size) {
   }//end if fichier opened
   else
     cerr << "Erreur à l'ouverture en lecture!" << endl;
-  
+  int margin=30;
   Point pts[4];
   mask=image.clone();
   for (size_t i = 0; i <4 ; ++i)
     pts[i]=input_quad[i];
   
   //Security mask : Top-Right ______begin
-  pts[1].y=0; pts[1].x=(int)input_quad[1].x-30;
+  pts[1].y=0; pts[1].x=(int)input_quad[1].x-margin;
   pts[2].y=0;
   //Right
   pts[2].x=image.cols;
-  pts[3].x=image.cols; pts[3].y=(int)input_quad[3].y+30;
+  pts[3].x=image.cols; pts[3].y=(int)input_quad[3].y+margin;
   //Make the mask larger 
-  pts[0].x=max(0,(int)(input_quad[0].x-30));
-  pts[0].y=min(image.rows,(int)(input_quad[0].y+30));
+  pts[0].x=max(0,(int)(input_quad[0].x-margin));
+  pts[0].y=min(image.rows,(int)(input_quad[0].y+margin));
   //Security mask : Top-Right ______end
   
 
@@ -121,7 +121,7 @@ Mat transformImage(const Mat &image, const int& size) {
   //Security mask : Top-Left  ______begin
   /*
     pts[1].y=0; 
-    pts[2].y=0; pts[2].x=input_quad[2].x+30;
+    pts[2].y=0; pts[2].x=input_quad[2].x+margin;
     //Left
     pts[1].x=0;  pts[0].x=0; 
   */
@@ -193,69 +193,64 @@ string getPieces(Mat &image, int black_thresh , int calib) {
   Mat output = transformImage(image, size);
   
   //Display output
-  //imshow("Output", output);
+  //  imshow("Output", output);
   //imshow("Reference", reference);
-  
-  Mat diff_w,diff_b, white ;
-  
+  //waitKey(0);
+
+
+  Mat diff_w,diff_b ;
   // Compute difference between image and reference
   absdiff(output , reference, diff_b);
   diff_w = output - reference;
   
-  //imshow("Black Difference", diff_b);
-   
   //Contrast treatement
   Mat contrast_diff1,contrast_ref,contrast_black;
   double alpha = 10; //< Simple contrast control
   int beta = 0;  //< Simple brightness control
   diff_b.convertTo(contrast_diff1, -1, alpha, beta);
-  //imshow("contrast apres premier difference",contrast_diff1);
 
   // Morphological opening and closing to filter noise
   int morph_size = size / 20;
   Mat kernel = getStructuringElement(CV_SHAPE_ELLIPSE, Size(morph_size, morph_size)) * 255;
   
-  //  imshow("contratsdiff1 to HSV",contrast_diff1);
-  //waitKey(0);
-  //black
+  //black morph
   morphologyEx(contrast_diff1,contrast_diff1,MORPH_CLOSE, kernel);
   morphologyEx(contrast_diff1,contrast_diff1,MORPH_OPEN, kernel);
-  //imshow("contratsdiff1 to HSV",contrast_diff1);
-  // waitKey(0);
+
+  //White  morph
+  morphologyEx(diff_w, diff_w, MORPH_OPEN, kernel);
+  morphologyEx(diff_w, diff_w,MORPH_CLOSE, kernel);
+
+
+  //convert to black difference to hsv
   Mat img_hsv;
   cvtColor(contrast_diff1, img_hsv, CV_BGR2HSV);
-  //  imshow("contratsdiff1 to HSV",img_hsv);
-  //waitKey(0);
- 
 
-
-  //White  
-  morphologyEx(diff_w, diff_w, MORPH_OPEN, kernel);
-  //imshow("After opening", diff_w);
-  morphologyEx(diff_w, diff_w,MORPH_CLOSE, kernel);
-  //imshow("After closing", diff_w);
-  
+  //convert to white difference to gray then threshold
   Mat diff_w_gray;
   cvtColor( diff_w, diff_w_gray, CV_BGR2GRAY );
   threshold( diff_w_gray, diff_w_gray, 20,255,THRESH_BINARY);
-  //imshow("After thresh",diff_w_gray);
 
 
+  //return white difference to BGR
   Mat difference;
   cvtColor(diff_w_gray, difference, CV_GRAY2BGR );
 
+
   // Split image in rectangles to detect presence of cells
+  //Rectangle size
   int rect_size = size / 8;
-
-
   
   // Initialize bitboard
   uint32_t w_pieces = 0;
   uint32_t b_pieces = 0;
+  //number of pieces detected with a doubt
   int doubt_count =0;
 
+  //min & max to compute the appropriate thres_value for the black detection
   int min=255;
   int max=0;
+  
   // Loop by line
   for(int j = 7; j >= 0; --j) {
     // Computing Y coordinate
@@ -269,24 +264,19 @@ string getPieces(Mat &image, int black_thresh , int calib) {
       int index = 4*j + i;
 
       uint32_t cell = 1 << index; 
-      // Fetch cell
+      // Fetch cell : white
       Mat roi = difference(Rect(rect_x, rect_y, rect_size, rect_size));
-      // imshow(std::to_string(num), roi);
       
-      
-      // Fetch cell
-      // Mat roi_b = diff_b(Rect(rect_x, rect_y, rect_size, rect_size));   
-       Mat roi_b = img_hsv(Rect(rect_x, rect_y, rect_size, rect_size));
-
+      // Fetch cell : black
+      Mat roi_b = img_hsv(Rect(rect_x, rect_y, rect_size, rect_size));
       
 
-       
-      // Convert to HSV to get Value
-       threshold_r = 200;
-       threshold_v = 10;
+      int white_thresh=10;
+
+      // Convert to HSV for
+      cvtColor(roi, roi, COLOR_BGR2HSV);
 
       //white
-      cvtColor(roi, roi, COLOR_BGR2HSV);
       Scalar mean_w =mean(roi);
       
       //black
@@ -306,32 +296,32 @@ string getPieces(Mat &image, int black_thresh , int calib) {
        }
       
       string doubt;
-      //int black_thresh=174;
-      int white_thresh=10;
+      int doubt_margin=8;
+      
       // If value is above threshold, a piece is present
-        cout << index << " : (" << rect_x << ", " << rect_y << ")" << endl;
-      // std::cout << "    BGR" << mean_bgr << " HSV" << mean_hsv;
+      cout << index << " : (" << rect_x << ", " << rect_y << ")" << endl;
+      //Detect a white piece
       if (mean_w.val[2] > white_thresh) {
 	doubt="";
-	if (abs(mean_w.val[2]- white_thresh)<10)
-	  { doubt="With doupt";
-	    doubt_count++;
-	  }
+	if (abs(mean_w.val[2] - white_thresh) < doubt_margin){
+	  doubt="With doupt";
+	  doubt_count++;
+	}
 	cout << "    mean_White" << mean_w;
 	cout << "WHITE PIECE FOUND  "<< doubt;
-        w_pieces |= cell;
+	w_pieces |= cell;
       }
-      else
+      else  //Detect a white piece
 	if (mean_b.val[2] > black_thresh) {
 	  doubt="";
-	  if (abs(mean_b.val[2]- black_thresh)<10)
-	    { doubt="With doupt";
-	      doubt_count++;
-	    }
+	  if (abs(mean_b.val[2] - black_thresh) < doubt_margin){
+	    doubt="With doupt";
+	    doubt_count++;
+	  } 
 	  cout << "    mean Black " << mean_b ;
 	  cout << "BLACK PIECE FOUND  " << doubt;
 	  b_pieces |= cell;
-	} else
+	} else   //Detect an empty boxe
 	  cout << "   mean Empty" << mean_b;
       cout << endl;
     }
@@ -339,23 +329,19 @@ string getPieces(Mat &image, int black_thresh , int calib) {
   
   
  
-
-if(calib){
-  int thresh;//=max-30;
-  // if(thresh <max)
-  thresh = max+ (min-max)*3/4;
-
-   
-   return to_string(thresh);
- }
+  //Done in calib mode
+  if(calib){
+  int thresh = max+ (min-max)*3/4;
+  return to_string(thresh);
+  }
+  //Done in the parse modes
  else{
    cout << "(Black) BOARD : " << bitset<32>(b_pieces) << " (" << b_pieces << ")" << endl;
    cout << "(White) BOARD : " << bitset<32>(w_pieces) << " (" << w_pieces << ")" << endl;
    string pieces= to_string(w_pieces)+"+"+ to_string(b_pieces);
    cerr<<" white + Black (sent to AI) : "<<pieces<<" With "<<doubt_count<<" doubts"<<endl;
    
-   return pieces;
-   
+   return pieces; 
  }
 
 }
@@ -363,28 +349,64 @@ if(calib){
  
 //Compare an image to the security mask
 int security(Mat src){
-  int security_coef, warning=0;
+  int warning=0;
   Scalar m;
-  Mat diff;
+  double maxValue = 255;
+  Mat thres,diff;
+
+
+  //Calibration params 
+  int security_coef=5;
+  int morph_size = 10;
+  double thresh =30;
+
+
+
+  //load security reference
   Mat security_ref=imread("security_mask.jpg");
+  //check if it was found successfully
   if(security_ref.empty()){
     cerr<<"Empty Security reference"<<endl;
     return 1 ;
   }
+
+  //convert to gray
   cvtColor(security_ref,security_ref,CV_BGR2GRAY);
   cvtColor(mask,mask,CV_BGR2GRAY);
+  // difference
+  absdiff(mask,security_ref, diff);
+  // Binary Threshold
+  threshold(diff,thres, thresh, maxValue, THRESH_BINARY);
+
+  // Morphological opening and closing to filter noise
+ 
+  Mat kernel = getStructuringElement(CV_SHAPE_ELLIPSE, Size(morph_size, morph_size)) * 255;
+  
+  //  imshow("difference", mask);
+  // waitKey(0);
+  //imshow("difference",diff);
+  //waitKey(0);
+  // imshow("difference",thres);
+  //waitKey(0);
+  
+  // morph
+  morphologyEx(thres,thres,MORPH_OPEN, kernel);
+  // imshow("difference",thres);
+  //waitKey(0);
+
+  morphologyEx(thres,thres,MORPH_CLOSE, kernel);
+  //imshow("difference",thres);
+  //waitKey(0);
+
   imshow("Board", src);
   waitKey(50);
-  diff=abs(mask-security_ref);
   
-  //security_coef=1; //log9
-  security_coef=7; //log7
-  
-  m = mean (diff);
+  m = mean (thres);
+  cerr<<"security mean"<<m<<endl;
   if(m[0]>security_coef){
     warning=1;
-    imshow ("Board",diff);
-    waitKey(50);
+    imshow ("Board",thres);
+    waitKey(0);
     cerr<<"!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"<<endl;
     cerr<<"An object is crossing the security Area "<<m[0]<<endl;
     cerr<<endl;
@@ -433,7 +455,6 @@ int stat(const string &directory,int black_thresh){
   closedir(dir);
   
   int num_files=filenames.size(); // how many we found
-  //cout << "Number of files = " << num_files << endl;
   
   for(size_t i = 0; i < filenames.size(); ++i){
     Mat src = imread(directory + filenames[i]);
