@@ -8,7 +8,7 @@ from time import sleep
 class Robot:
     def __init__(self):
         self.a = 2 # Tool acceleration (m/s²)
-        self.v = 0.1 #(max=3) # Tool speed (m/s)
+        self.v = 1.5 #(max=3) # Tool speed (m/s)
         self.payload_weight = 1.2
 
         self.lift_distance = 0.03
@@ -33,6 +33,9 @@ class Robot:
 
         start2 = self.rob.getl()
 
+        start1 = [0.5559968502070983, 0.024707805742532018, 0.0215384759621553, -2.082863999008885, -2.3216431206192554, 0.08620846226469636]
+        start2 = [0.8044672338477912, -0.21769975837303795, 0.02297264311949147, -2.0843400890077115, -2.3130892027976806, 0.08609552457388786]
+
         self.delta = [(b - a) / 7.0 for a, b in zip(start1, start2)]
 
         # Cancel angle linearization
@@ -45,6 +48,8 @@ class Robot:
         print start1
         print start2
 
+        self.go_home()
+
         print self.delta
         print self.start
 
@@ -55,8 +60,8 @@ class Robot:
         return low, high
 
     def get_pos(self, n):
-        i = 2 * (n % 4)
-        j = n // 4
+        i = 6 - (2 * (n % 4))
+        j = (n // 4)
 
         if (j % 2 == 0):
             i += 1
@@ -93,6 +98,12 @@ class Robot:
         self.rob.movel(pos_to_low, self.a, self.v)
         wsg.release()
         sleep(0.3)
+        self.rob.movel(pos_to_high, self.a, self.v)
+
+    def go_home(self):
+        pos_to_offset = (-6 * self.delta[0], -1 * self.delta[1], self.delta[2], 0.0, 0.0, 0.0)
+        _, pos_to_high = self.get_poses(pos_to_offset)
+        pos_to_high[2] += 2 * self.lift_distance
         self.rob.movel(pos_to_high, self.a, self.v)
 
     def remove_piece(self, n, wsg):
@@ -147,6 +158,10 @@ if __name__ == "__main__":
         wsg.connect()
 
         for i in range(32):
+            ur.remove_piece(i, wsg)
+
+        for i in range(32):
+            ur.go_home()
             ur.move_piece(i, 5, wsg)
             ur.remove_piece(i, wsg)
     except KeyboardInterrupt:

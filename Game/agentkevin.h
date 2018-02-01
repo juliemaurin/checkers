@@ -9,6 +9,9 @@ public:
   AgentKevin();
   virtual ~AgentKevin();
   virtual Word make_move(const CheckerBoard &board);
+
+private:
+  TCPHelper control;
 };
 
 #endif // AGENTKEVIN_H

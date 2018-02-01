@@ -4,14 +4,20 @@ AgentWalter::AgentWalter(PieceType self, int max_depth) : self(self), max_depth(
   // TODO : Do something else, this is ugly
   if (self == CheckerBoard::WHITE) enemy = CheckerBoard::BLACK;
   else enemy = CheckerBoard::WHITE;
+
+  control = TCPHelper();
+  std::cout << "Connecting AgentWalter to control" << std::endl;
+  control.openSocket("127.0.0.1", "10000");
 }
 
 AgentWalter::~AgentWalter() {
-
+    control.closeSocket();
 }
 
 // TODO : Walter (Walter Pitts) will be our main AI
 Word AgentWalter::make_move(const CheckerBoard &board) {
+  std::cout << "Walter thinking" << std::endl;
+
   std::vector<Word> moves = board.get_moves();
   size_t best_move = 0;
   size_t index = 0;
@@ -39,10 +45,9 @@ Word AgentWalter::make_move(const CheckerBoard &board) {
   }
   std::cout << "Move Value : " << value << std::endl;
 
-  TCPHelper tcpH = TCPHelper();
-  tcpH.openSocket("127.0.0.1", "10000");
-  tcpH.send(board.to_string(moves.at(best_move)));
-
+  control.send(board.to_string(moves.at(best_move)));
+  std::string s = control.receive();
+  std::cout << "AgentWalter Response : " << s << std::endl;
   return moves.at(best_move);
 }
 

@@ -227,11 +227,16 @@ string getPieces(Mat &image, int black_thresh , int calib) {
   Mat img_hsv;
   cvtColor(contrast_diff1, img_hsv, CV_BGR2HSV);
 
+  imshow("Image HSV", img_hsv);
+  waitKey(1);
+
   //convert to white difference to gray then threshold
   Mat diff_w_gray;
   cvtColor( diff_w, diff_w_gray, CV_BGR2GRAY );
   threshold( diff_w_gray, diff_w_gray, 20,255,THRESH_BINARY);
 
+  imshow("Thresholded image", diff_w_gray);
+  waitKey(1);
 
   //return white difference to BGR
   Mat difference;

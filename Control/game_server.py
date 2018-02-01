@@ -3,12 +3,13 @@
 import socket
 import urx_control
 import wsg50_control
+import sys
 
 try:
     print "Starting game server"
     # Create game server socket
     game_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    game_sock.bind(('localhost', 10000))
+    game_sock.bind(("127.0.0.1", 10000))
 
     # Calling listen() puts the socket into server mode,
     # and accept() waits for an incoming connection.
@@ -51,13 +52,14 @@ try:
                     if (index_high - index_low > 6):
                         # Compute the position of the "taken piece" while jumping
                         print "It's a jump"
-                        
+
                         taken_piece = (index_high + index_low) / 2
                         if (((index_low / 4) % 2) != 0):
                             taken_piece += 1
 
                         ur.remove_piece(taken_piece, wsg)
 
+                    ur.go_home()
                     print "Sending reply"
                     connection.sendall(data)
                 else:
