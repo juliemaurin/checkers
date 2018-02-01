@@ -8,7 +8,7 @@ from time import sleep
 class Robot:
     def __init__(self):
         self.a = 2 # Tool acceleration (m/s²)
-        self.v = 1.5 #(max=3) # Tool speed (m/s)
+        self.v = 3 #(max=3) # Tool speed (m/s)
         self.payload_weight = 1.2
 
         self.lift_distance = 0.03
@@ -157,13 +157,19 @@ if __name__ == "__main__":
         wsg = wsg50_control.WSG50()
         wsg.connect()
 
-        for i in range(32):
-            ur.remove_piece(i, wsg)
 
-        for i in range(32):
-            ur.go_home()
-            ur.move_piece(i, 5, wsg)
-            ur.remove_piece(i, wsg)
+        #ur.move_piece(9, 16, wsg)
+        #ur.remove_piece(12, wsg)
+        #ur.move_piece(14, 23, wsg)
+        #ur.remove_piece(19, wsg)
+        #ur.move_piece(16, 25, wsg)
+        #ur.move_piece(23, 30, wsg)
+        #ur.remove_piece(27, wsg)
+        #ur.move_piece(10, 19, wsg)
+        ur.remove_piece(14, wsg)
+
+        ur.go_home()
+
     except KeyboardInterrupt:
         print "MANUALY INTERRUPTED"
     except:

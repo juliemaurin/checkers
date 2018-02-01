@@ -31,10 +31,11 @@ void AgentVision::replace_board(CheckerBoard &board) {
   std::cout << "Response :" << s << std::endl;
 
   std::cout << "Please press a key then enter when you have finished moving pieces" << std::endl;
-
-  std::string c;
-  std::cin >> c;
-  std::cin.clear();
+  vision.send("Time");
+  s = vision.receive();
+  //std::string c;
+  //std::cin >> c;
+  //std::cin.clear();
 
   std::cout << "Sending request" << std::endl;
   vision.send("Request");

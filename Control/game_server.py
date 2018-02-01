@@ -75,6 +75,7 @@ except:
     print "UNEXPECTED ERROR"
     print sys.exc_info()
 finally:
+    print "TERMINATING..."
     ur.rob.stopl()
     ur.rob.close()
     wsg.disconnect()
