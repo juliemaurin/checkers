@@ -39,7 +39,7 @@ void play(const std::string black_agent, const std::string white_agent) {
   PieceType current_player = B->active;
   Word move;
   int turn = 1;
-  std::cout << B;
+  std::cout << *B;
   while(!B->is_over()) {
       if (black_agent == "vision") {
         // Vision agent has a special access to the board to replace it

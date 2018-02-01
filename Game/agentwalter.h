@@ -25,6 +25,7 @@ private:
 
   int max_depth;
 
+  TCPHelper control;
 };
 
 #endif // AGENTWALTER_H
