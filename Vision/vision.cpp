@@ -3,6 +3,7 @@
 static Mat mask;
 static string pieces_valid;
 static bool is_robot_moving = false;
+static int vision_timer = 0;
 
 // onMouse event callback function
 void onMouse(int event, int x, int y, int, void* data) {
@@ -209,6 +210,9 @@ string getPieces(Mat &image, int black_thresh , int calib) {
   double alpha = 10; //< Simple contrast control
   int beta = 0;  //< Simple brightness control
   diff_b.convertTo(contrast_diff1, -1, alpha, beta);
+
+  imshow("Contrast", contrast_diff1);
+  waitKey(1);
 
   // Morphological opening and closing to filter noise
   int morph_size = size / 20;
@@ -554,6 +558,10 @@ void socket_thread() {
                 std::cout << "Sending pieces data" << std::endl;
                 soc.send(pieces_valid);
                 cout << "The message : "<< pieces_valid <<" was sent to the Game"<<endl;
+            } else if (data.front() == 'T') {
+                while(vision_timer < 50);
+                vision_timer = 0;
+                soc.send("ACK PLAYER");
             } else {
                 cout << "Unknown message : " << data << endl;
             }
@@ -581,13 +589,24 @@ int videoGetPieces(int black_thresh) {
 
     thread st(socket_thread);
 
+    int warning = 0;
+
     while(1) {
         // Get a new frame
         Mat image;
         cap >> image; // get a new frame from camera
         string pieces = getPieces(image, black_thresh, 0);
 
-        int warning = security(image);
+        int old_warn = warning;
+        warning = security(image);
+
+        if (warning || (!warning && old_warn)) {
+            vision_timer = 0;
+        } else if (!warning && !old_warn && !is_robot_moving) {
+            vision_timer++;
+        }
+
+        std::cout << "T = " << vision_timer << std::endl;
 
         if (warning && is_robot_moving) {
             std::cout << "SECURITY ERROR" << std::endl;

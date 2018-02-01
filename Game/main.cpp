@@ -15,7 +15,7 @@ void play(const std::string black_agent, const std::string white_agent) {
   CheckersAgent *black;
   CheckersAgent *white;
 
-  int max_depth = 10;
+  int max_depth = 5;
 
   if (black_agent == "walter") {
       black = new AgentWalter(CheckerBoard::BLACK, max_depth);
