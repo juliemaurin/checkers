@@ -195,7 +195,7 @@ string getPieces(Mat &image, int black_thresh , int calib) {
   Mat output = transformImage(image, size);
   
   //Display output
-  //  imshow("Output", output);
+    imshow("Output", output);
   //imshow("Reference", reference);
   //waitKey(0);
 
